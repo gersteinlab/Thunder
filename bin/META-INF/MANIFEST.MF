@@ -1,0 +1,25 @@
+Manifest-Version: 1.0
+Main-Class: main.Thunder
+Created-By: Rob
+Built-By: Rob
+Build-Jdk: 1.6.0
+Implementation-Title: Thunder
+Implementation-Vendor: Rob
+Implementation-Vendor-Id: org.rob
+Implementation-Version: 1.0
+Specification-Title: Thunder
+Specification-Vendor: Rob
+Specification-Version: 1.0
+X-Compile-Source-JDK: 1.6
+X-Compile-Target-JDK: 1.6
+Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
+Import-Package: org.rob.thunder;version="1.0"
+Bnd-LastModified: 1237188678711
+Export-Package: org.rob.thunder;version="1.0"
+Bundle-Version: 1.0
+Bundle-Description: Software suite for the processing of personal genomic datasets.
+Bundle-Name: Thunder
+Bundle-DocURL: http://null
+Bundle-ManifestVersion: 2
+Bundle-Vendor: Rob
+Bundle-SymbolicName: org.rob.thunder
