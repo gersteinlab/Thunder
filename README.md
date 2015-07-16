@@ -6,7 +6,6 @@ Usage:	 java -Xmx2G -jar Thunder.jar <Command>
 Available Commands: 
 
 	GetSequenceLengths		| Get the distribution of sequence lengths in a FASTA/Q file
-
 	FastaHeaderGrep			| Filter fasta sequences based on the sequence ID
 
 	FilterSequencesByLength		| Filter fasta or fastq sequences based on some maximum sequence length
