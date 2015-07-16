@@ -1,9 +1,9 @@
 # Thunder
 Bunch of tools for RNA and protein analysis
 
-Usage:	 java -Xmx2G -jar Thunder.jar <Command>
+Usage:	 java -Xmx2G -jar Thunder.jar \<Command\>
 
-Available Commands: 
+Available \<Command\> options: 
 
 	GetSequenceLengths			| Get the distribution of sequence lengths in a FASTA/Q file
 	FastaHeaderGrep				| Filter fasta sequences based on the sequence ID
