@@ -3,25 +3,27 @@ Bunch of tools for RNA and protein analysis
 
 Usage:	 java -Xmx2G -jar Thunder.jar <Command>
 
-Command: GetSequenceLengths	 | Get the distribution of sequence lengths in a FASTA/Q file
+Available Commands: 
 
-	FastaHeaderGre		 | Filter fasta sequences based on the sequence ID
+	GetSequenceLengths		| Get the distribution of sequence lengths in a FASTA/Q file
 
-	FilterSequencesByLengt	 | Filter fasta or fastq sequences based on some maximum sequence length
+	FastaHeaderGrep			| Filter fasta sequences based on the sequence ID
 
-	RemoveHomopolymerRepeat	 | Filter fasta or fastq sequences based on sequence composition
+	FilterSequencesByLength		| Filter fasta or fastq sequences based on some maximum sequence length
 
-	MatchPairedEndSequence	 | Match paired-end fastq sequences based on readID
+	RemoveHomopolymerRepeat		| Filter fasta or fastq sequences based on sequence composition
 
-	GTF2Fasta		 | Extract GTF coordinates from FASTA sequence(s)
+	MatchPairedEndSequence		| Match paired-end fastq sequences based on readID
 
-	ParseTandemOutput		 | Process X!Tandem MS/MS-spectra alignments and output summary table
+	GTF2Fasta			| Extract GTF coordinates from FASTA sequence(s)
 
-	IsoformEM_Footprint	 | Infer most likely transcripts from ribosome footprint alignments
+	ParseTandemOutput		| Process X!Tandem MS/MS-spectra alignments and output summary table
 
-	IsoformEM_Proteomic	 | Infer most likely isoforms from MS/MS spectra mapping
+	IsoformEM_Footprint		| Infer most likely transcripts from ribosome footprint alignments
 
-	CIGAR_2_PW		 | Reads SAM alignments and converts the CIGAR strings to a position-weight matrix
+	IsoformEM_Proteomic		| Infer most likely isoforms from MS/MS spectra mapping
 
-	ProcessEndogenousAlignments | Process endogenous smallRNA alignments for the exceRpt pipeline
+	CIGAR_2_PW			| Reads SAM alignments and converts the CIGAR strings to a position-weight matrix
+
+	ProcessEndogenousAlignments	| Process endogenous smallRNA alignments for the exceRpt pipeline
 
