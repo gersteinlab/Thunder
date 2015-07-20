@@ -62,7 +62,11 @@ public class FootprintEM {
 			thisRecord = it.next();
 			thisTranscriptID = thisRecord.getReferenceName();
 			thisReadID = thisRecord.getReadName();
-
+			
+			// TODO remove reads mapping antisense to a transcript!
+			//if(!thisRecord.getMateNegativeStrandFlag()){ ...
+			
+			
 			if(transcriptID_2_geneID.containsKey(thisTranscriptID)){
 
 				if(!thisReadID.equals(lastReadID)){  		// new read

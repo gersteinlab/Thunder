@@ -21,6 +21,7 @@ import expectationMaximisation.FootprintEM;
 import expectationMaximisation.ProteomicEM;
 import fastaTools.FastaHeaderGrep;
 import fastqTools.FilterBySequenceLength;
+import fastqTools.FilterFastxByHeaderList;
 import fastqTools.GetSequenceLengths;
 import fastqTools.MatchPairedEndSequences;
 import fastqTools.RemoveHomopolymers;
@@ -29,7 +30,7 @@ import genome.ReadVCF;
 
 public class Thunder {
 
-	public static final String VERSION = "0.4.01";
+	public static final String VERSION = "0.4.2";
 	
 	public static final String OPT_PATH_DB_ANNOTATION = "A";
 	public static final String OPT_PATH_DB_SAMPLE = "S";
@@ -111,6 +112,8 @@ public class Thunder {
 			FastaHeaderGrep.main(args);
 		}else if(main.equals("processendogenousalignments")){
 			ProcessEndogenousAlignments.main(args);
+		}else if(main.equals("filterfastxbyidlist")){
+			FilterFastxByHeaderList.main(args);
 		}
 		else{
 			System.out.println("Thunder version "+VERSION);
@@ -121,6 +124,7 @@ public class Thunder {
 
 			System.out.println("Command: GetSequenceLengths          | Get the distribution of sequence lengths in a FASTA/Q file");
 			System.out.println("         FastaHeaderGrep             | Filter fasta sequences based on the sequence ID");
+			System.out.println("         FilterFastxByIDList         | Filter fasta/q sequences based on a list of sequence IDs");
 			System.out.println("         FilterSequencesByLength     | Filter fasta or fastq sequences based on some maximum sequence length");
 			System.out.println("         RemoveHomopolymerRepeats    | Filter fasta or fastq sequences based on sequence composition");
 			System.out.println("         MatchPairedEndSequences     | Match paired-end fastq sequences based on readID");
