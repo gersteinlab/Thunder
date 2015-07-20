@@ -208,6 +208,9 @@ public class ProcessEndogenousAlignments {
 					readCounts_gencode_antisense.put(mapsTo, 0.0);
 				readCounts_gencode_antisense.put(mapsTo, readCounts_gencode_antisense.get(mapsTo) + 1.0/(nMultimaps+0.0));
 			}
+			
+			
+			
 			/*
 			 * Write chosen alignments
 			 */
@@ -219,6 +222,8 @@ public class ProcessEndogenousAlignments {
 				e.printStackTrace();
 			}
 
+			
+			
 			/*
 			 * If the read aligns to a precursor miRNA, try to find a mature sequences that it overlaps
 			 */
@@ -233,9 +238,15 @@ public class ProcessEndogenousAlignments {
 						matureAlignments.add(maps2mature);
 				}else{
 					// read does not hit annotated mature miRNA, assign to hairpin instead
-					if(!readCounts_precursorMiRNA.containsKey(mapsTo))
-						readCounts_precursorMiRNA.put(mapsTo, 0.0);
-					readCounts_precursorMiRNA.put(mapsTo, readCounts_precursorMiRNA.get(mapsTo)+(1.0/(nMultimaps+0.0)));
+					if(keptLibrary.equals("miRNA_sense")){
+						if(!readCounts_precursorMiRNA_sense.containsKey(mapsTo))
+							readCounts_precursorMiRNA_sense.put(mapsTo, 0.0);
+						readCounts_precursorMiRNA_sense.put(mapsTo, readCounts_precursorMiRNA_sense.get(mapsTo)+(1.0/(nMultimaps+0.0)));
+					}else{
+						if(!readCounts_precursorMiRNA_antisense.containsKey(mapsTo))
+							readCounts_precursorMiRNA_antisense.put(mapsTo, 0.0);
+						readCounts_precursorMiRNA_antisense.put(mapsTo, readCounts_precursorMiRNA_antisense.get(mapsTo)+(1.0/(nMultimaps+0.0)));
+					}
 				}
 			}else{
 				try { _optimalAlignmentWriter.write("\tNA\n");
@@ -254,62 +265,94 @@ public class ProcessEndogenousAlignments {
 			String tmpID;
 			while(it3.hasNext()){
 				tmpID = it3.next();
-				if(!readCounts_matureMiRNA.containsKey(tmpID))
-					readCounts_matureMiRNA.put(tmpID, 0.0);
-				readCounts_matureMiRNA.put(tmpID, readCounts_matureMiRNA.get(tmpID)+(1.0/(matureAlignments.size()+0.0)));
+				if(keptLibrary.equals("miRNA_sense")){
+					if(!readCounts_matureMiRNA_sense.containsKey(tmpID))
+						readCounts_matureMiRNA_sense.put(tmpID, 0.0);
+					readCounts_matureMiRNA_sense.put(tmpID, readCounts_matureMiRNA_sense.get(tmpID)+(1.0/(matureAlignments.size()+0.0)));
+				}else{
+					if(!readCounts_matureMiRNA_antisense.containsKey(tmpID))
+						readCounts_matureMiRNA_antisense.put(tmpID, 0.0);
+					readCounts_matureMiRNA_antisense.put(tmpID, readCounts_matureMiRNA_antisense.get(tmpID)+(1.0/(matureAlignments.size()+0.0)));
+				}
 			}
 		}else{
 
 		}
-
-
-
-		//System.out.println();
-
 	}
+	
+	
+	
 
-	private HashMap<String, Double> readCounts_matureMiRNA = new HashMap<String, Double>();
-	private HashMap<String, Double> readCounts_precursorMiRNA = new HashMap<String, Double>();
+	private HashMap<String, Double> readCounts_matureMiRNA_sense = new HashMap<String, Double>();
+	private HashMap<String, Double> readCounts_precursorMiRNA_sense = new HashMap<String, Double>();
 	private HashMap<String, Double> readCounts_tRNA_sense = new HashMap<String, Double>();
 	private HashMap<String, Double> readCounts_piRNA_sense = new HashMap<String, Double>();
 	private HashMap<String, Double> readCounts_circRNA_sense = new HashMap<String, Double>();
 	private HashMap<String, Double> readCounts_gencode_sense = new HashMap<String, Double>();
+	
+	private HashMap<String, Double> readCounts_matureMiRNA_antisense = new HashMap<String, Double>();
+	private HashMap<String, Double> readCounts_precursorMiRNA_antisense = new HashMap<String, Double>();
 	private HashMap<String, Double> readCounts_tRNA_antisense = new HashMap<String, Double>();
 	private HashMap<String, Double> readCounts_piRNA_antisense = new HashMap<String, Double>();
 	private HashMap<String, Double> readCounts_circRNA_antisense = new HashMap<String, Double>();
 	private HashMap<String, Double> readCounts_gencode_antisense = new HashMap<String, Double>();
 
+	
 
 	/**
 	 * @throws IOException 
 	 * 
 	 */
 	public void writeCounts_miRNA(String basePath) throws IOException{
+		//
 		// Do the mature miRNAs
+		//
 		BufferedWriter out = new BufferedWriter(new FileWriter(basePath+"/mature_sense.tmp"));
-		Iterator<String> it = readCounts_matureMiRNA.keySet().iterator();
+		Iterator<String> it = readCounts_matureMiRNA_sense.keySet().iterator();
 		String tmpID = "";
 		while(it.hasNext()){
 			tmpID = it.next();
-			//System.out.println(tmpID+"\t"+readCounts_matureMiRNA.get(tmpID));
-			out.write(tmpID+"\t"+readCounts_matureMiRNA.get(tmpID)+"\n");
+			out.write(tmpID+"\t"+readCounts_matureMiRNA_sense.get(tmpID)+"\n");
+		}
+		out.flush();
+		out.close();
+		out = new BufferedWriter(new FileWriter(basePath+"/mature_antisense.tmp"));
+		it = readCounts_matureMiRNA_antisense.keySet().iterator();
+		while(it.hasNext()){
+			tmpID = it.next();
+			out.write(tmpID+"\t"+readCounts_matureMiRNA_antisense.get(tmpID)+"\n");
 		}
 		out.flush();
 		out.close();
 
+		//
 		// Do the precursor miRNAs
+		//
 		out = new BufferedWriter(new FileWriter(basePath+"/hairpin_sense.tmp"));
-		it = readCounts_precursorMiRNA.keySet().iterator();
+		it = readCounts_precursorMiRNA_sense.keySet().iterator();
 		while(it.hasNext()){
 			tmpID = it.next();
-			//System.out.println(tmpID+"\t"+readCounts_precursorMiRNA.get(tmpID));
-			out.write(tmpID+"\t"+readCounts_precursorMiRNA.get(tmpID)+"\n");
+			out.write(tmpID+"\t"+readCounts_precursorMiRNA_sense.get(tmpID)+"\n");
+		}
+		out.flush();
+		out.close();
+		out = new BufferedWriter(new FileWriter(basePath+"/hairpin_antisense.tmp"));
+		it = readCounts_precursorMiRNA_antisense.keySet().iterator();
+		while(it.hasNext()){
+			tmpID = it.next();
+			out.write(tmpID+"\t"+readCounts_precursorMiRNA_antisense.get(tmpID)+"\n");
 		}
 		out.flush();
 		out.close();
 	}
 
 
+	
+	/**
+	 * 
+	 * @param basePath
+	 * @throws IOException
+	 */
 	public void writeCounts_otherLibraries(String basePath) throws IOException{
 		// Do the tRNAs
 		if(readCounts_tRNA_sense.size() > 0){
@@ -318,8 +361,18 @@ public class ProcessEndogenousAlignments {
 			String tmpID = "";
 			while(it.hasNext()){
 				tmpID = it.next();
-				//System.out.println(tmpID+"\t"+readCounts_tRNA_sense.get(tmpID));
 				out.write(tmpID+"\t"+readCounts_tRNA_sense.get(tmpID)+"\n");
+			}
+			out.flush();
+			out.close();
+		}
+		if(readCounts_tRNA_antisense.size() > 0){
+			BufferedWriter out = new BufferedWriter(new FileWriter(basePath+"/tRNA_antisense.tmp"));
+			Iterator<String> it = readCounts_tRNA_antisense.keySet().iterator();
+			String tmpID = "";
+			while(it.hasNext()){
+				tmpID = it.next();
+				out.write(tmpID+"\t"+readCounts_tRNA_antisense.get(tmpID)+"\n");
 			}
 			out.flush();
 			out.close();
@@ -338,7 +391,18 @@ public class ProcessEndogenousAlignments {
 			out.flush();
 			out.close();
 		}
-
+		if(readCounts_piRNA_antisense.size() > 0){
+			BufferedWriter out = new BufferedWriter(new FileWriter(basePath+"/piRNA_antisense.tmp"));
+			Iterator<String> it = readCounts_piRNA_antisense.keySet().iterator();
+			String tmpID = "";
+			while(it.hasNext()){
+				tmpID = it.next();
+				//System.out.println(tmpID+"\t"+readCounts_piRNA_sense.get(tmpID));
+				out.write(tmpID+"\t"+readCounts_piRNA_antisense.get(tmpID)+"\n");
+			}
+			out.flush();
+			out.close();
+		}
 
 		// Do the circularRNAs
 		if(readCounts_circRNA_sense.size() > 0){
@@ -353,7 +417,18 @@ public class ProcessEndogenousAlignments {
 			out.flush();
 			out.close();
 		}
-		
+		if(readCounts_circRNA_antisense.size() > 0){
+			BufferedWriter out = new BufferedWriter(new FileWriter(basePath+"/circularRNA_antisense.tmp"));
+			Iterator<String> it = readCounts_circRNA_antisense.keySet().iterator();
+			String tmpID = "";
+			while(it.hasNext()){
+				tmpID = it.next();
+				//System.out.println(tmpID+"\t"+readCounts_piRNA_sense.get(tmpID));
+				out.write(tmpID+"\t"+readCounts_circRNA_antisense.get(tmpID)+"\n");
+			}
+			out.flush();
+			out.close();
+		}
 		
 		// Do the gencode alignments
 		if(readCounts_gencode_sense.size() > 0){
@@ -368,8 +443,21 @@ public class ProcessEndogenousAlignments {
 			out.flush();
 			out.close();
 		}
+		if(readCounts_gencode_antisense.size() > 0){
+			BufferedWriter out = new BufferedWriter(new FileWriter(basePath+"/gencode_antisense.tmp"));
+			Iterator<String> it = readCounts_gencode_antisense.keySet().iterator();
+			String tmpID = "";
+			while(it.hasNext()){
+				tmpID = it.next();
+				//System.out.println(tmpID+"\t"+readCounts_piRNA_sense.get(tmpID));
+				out.write(tmpID+"\t"+readCounts_gencode_antisense.get(tmpID)+"\n");
+			}
+			out.flush();
+			out.close();
+		}
 	}
 
+	
 
 	/**
 	 * 
