@@ -109,8 +109,8 @@ public class ProcessEndogenousAlignments {
 		 * 2- miRNA
 		 * 3- tRNA
 		 * 4- piRNA
-		 * 5- circRNA
-		 * 6- gencode
+		 * 5- gencode
+		 * 6- circRNA
 		 */
 		String keptLibrary = "none";
 		if(readHasSenseAlignment){
@@ -123,12 +123,12 @@ public class ProcessEndogenousAlignments {
 			}else if(readsByLibrary.containsKey("piRNA_sense")){
 				keepAlignments = readsByLibrary.get("piRNA_sense");
 				keptLibrary = "piRNA_sense";
-			}else if(readsByLibrary.containsKey("circRNA_sense")){
-				keepAlignments = readsByLibrary.get("circRNA_sense");
-				keptLibrary = "circRNA_sense";
 			}else if(readsByLibrary.containsKey("gencode_sense")){
 				keepAlignments = readsByLibrary.get("gencode_sense");
 				keptLibrary = "gencode_sense";
+			}else if(readsByLibrary.containsKey("circRNA_sense")){
+				keepAlignments = readsByLibrary.get("circRNA_sense");
+				keptLibrary = "circRNA_sense";
 			}
 		}else{
 			if(readsByLibrary.containsKey("miRNA_antisense")){
@@ -140,12 +140,12 @@ public class ProcessEndogenousAlignments {
 			}else if(readsByLibrary.containsKey("piRNA_antisense")){
 				keepAlignments = readsByLibrary.get("piRNA_antisense");
 				keptLibrary = "piRNA_antisense";
-			}else if(readsByLibrary.containsKey("circRNA_antisense")){
-				keepAlignments = readsByLibrary.get("circRNA_antisense");
-				keptLibrary = "circRNA_antisense";
 			}else if(readsByLibrary.containsKey("gencode_antisense")){
 				keepAlignments = readsByLibrary.get("gencode_antisense");
 				keptLibrary = "gencode_antisense";
+			}else if(readsByLibrary.containsKey("circRNA_antisense")){
+				keepAlignments = readsByLibrary.get("circRNA_antisense");
+				keptLibrary = "circRNA_antisense";
 			}
 		}
 
@@ -163,8 +163,9 @@ public class ProcessEndogenousAlignments {
 			tmp2 = it2.next();
 			//System.out.println(tmp2.getReferenceName());
 			String[] refIDbits = tmp2.getReferenceName().split(":");
-			String mapsTo = refIDbits[1];
-			for(int i=2;i<refIDbits.length;i++)
+			String isGenomeMapped = refIDbits[0];
+			String mapsTo = refIDbits[2];
+			for(int i=3;i<refIDbits.length;i++)
 				mapsTo = mapsTo.concat(":"+refIDbits[i]);
 
 			if(keptLibrary.equals("miRNA_sense")){
@@ -216,7 +217,7 @@ public class ProcessEndogenousAlignments {
 			 */
 			//System.out.print(tmp2.getReadName()+"\t"+mapsTo+"\t"+keptLibrary+"\t"+tmp2.getAlignmentStart()+"\t"+tmp2.getAlignmentEnd()+"\tNM:i:"+tmp2.getIntegerAttribute("NM")+"\tMD:Z:"+tmp2.getStringAttribute("MD"));
 			try {
-				_optimalAlignmentWriter.write(tmp2.getReadName()+"\t"+keptLibrary+"\t"+mapsTo+"\t"+tmp2.getAlignmentStart()+"\t"+tmp2.getAlignmentEnd()+"\tNM:i:"+tmp2.getIntegerAttribute("NM")+"\tMD:Z:"+tmp2.getStringAttribute("MD"));
+				_optimalAlignmentWriter.write(tmp2.getReadName()+"\t"+keptLibrary+"\t"+isGenomeMapped+"\t"+mapsTo+"\t"+tmp2.getAlignmentStart()+"\t"+tmp2.getAlignmentEnd()+"\tNM:i:"+tmp2.getIntegerAttribute("NM")+"\tMD:Z:"+tmp2.getStringAttribute("MD"));
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -500,7 +501,7 @@ public class ProcessEndogenousAlignments {
 				assignRead(thisRead);
 				thisRead = new HashMap<SAMRecord, String>();
 			}
-			thisRead.put(thisRecord, thisRecord.getReferenceName().split(":")[0]);
+			thisRead.put(thisRecord, thisRecord.getReferenceName().split(":")[1]);
 			lastReadID = thisRecord.getReadName();
 			//System.out.println(thisRecord.getReferenceName().split(":")[0]+"\t"+thisRecord.getReferenceName()+"\t"+thisRecord.getReadName());
 
