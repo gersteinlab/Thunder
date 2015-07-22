@@ -30,7 +30,7 @@ import genome.ReadVCF;
 
 public class Thunder {
 
-	public static final String VERSION = "0.4.2";
+	public static final String VERSION = "0.4.3";
 	
 	public static final String OPT_PATH_DB_ANNOTATION = "A";
 	public static final String OPT_PATH_DB_SAMPLE = "S";
