@@ -12,6 +12,9 @@ public class SequenceRecord {
 	public void addSequenceString(String sequenceString){ this.seq.append(sequenceString); }
 	public void addQualityString(String qualString){ this.qual.append(qualString); }
 	
+	public String getSequence(){ return this.seq.toString().trim(); }
+	public String getQuality(){ return this.qual.toString().trim(); }
+	
 	public int getSequenceLength(){ return this.seq.toString().trim().length(); }
 	public String getSequenceID(){ return this.id; }
 	public void setSequenceID(String newID){ this.id = newID; }

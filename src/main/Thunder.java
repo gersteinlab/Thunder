@@ -24,13 +24,14 @@ import fastqTools.FilterBySequenceLength;
 import fastqTools.FilterFastxByHeaderList;
 import fastqTools.GetSequenceLengths;
 import fastqTools.MatchPairedEndSequences;
+import fastqTools.ProcessFastqWithRandomBarcode;
 import fastqTools.RemoveHomopolymers;
 import genome.CreatePersonalGenome;
 import genome.ReadVCF;
 
 public class Thunder {
 
-	public static final String VERSION = "0.4.3";
+	public static final String VERSION = "0.4.4";
 	
 	public static final String OPT_PATH_DB_ANNOTATION = "A";
 	public static final String OPT_PATH_DB_SAMPLE = "S";
@@ -114,6 +115,8 @@ public class Thunder {
 			ProcessEndogenousAlignments.main(args);
 		}else if(main.equals("filterfastxbyidlist")){
 			FilterFastxByHeaderList.main(args);
+		}else if(main.equals("processfastqwithrandombarcode")){
+			ProcessFastqWithRandomBarcode.main(args);
 		}
 		else{
 			System.out.println("Thunder version "+VERSION);
@@ -122,25 +125,26 @@ public class Thunder {
 			System.out.println("Usage:\t "+Thunder.THUNDER_EXE_COMMAND+" <Command>");
 			System.out.println("");
 
-			System.out.println("Command: GetSequenceLengths          | Get the distribution of sequence lengths in a FASTA/Q file");
-			System.out.println("         FastaHeaderGrep             | Filter fasta sequences based on the sequence ID");
-			System.out.println("         FilterFastxByIDList         | Filter fasta/q sequences based on a list of sequence IDs");
-			System.out.println("         FilterSequencesByLength     | Filter fasta or fastq sequences based on some maximum sequence length");
-			System.out.println("         RemoveHomopolymerRepeats    | Filter fasta or fastq sequences based on sequence composition");
-			System.out.println("         MatchPairedEndSequences     | Match paired-end fastq sequences based on readID");
-			//System.out.println("         ModifyTophatHeaders      | re-formats fasta headers in the tophat-generated transcriptome for downstream compatibility with Thunder");
-			//System.out.println("         ListDBTables             | list the contents of a database");
-			System.out.println("         GTF2Fasta                   | Extract GTF coordinates from FASTA sequence(s)");
-			//System.out.println("         ReadAnnotation           | import annotation information in GTF to the database");
-			//System.out.println("         ReadVCF                  | import genotype data to the database");
-			//System.out.println("         CreatePersonalGenome     | create a personalised reference genome for a sample in the database");
-			//System.out.println("         ReadMzXML                | import MS- and MS/MS-spectra to the database");
-			//System.out.println("         ReadTandem_toDB          | import X!Tandem MS/MS-spectra IDs to the database");
-			System.out.println("         ParseTandemOutput           | Process X!Tandem MS/MS-spectra alignments and output summary table");
-			System.out.println("         IsoformEM_Footprints        | Infer most likely transcripts from ribosome footprint alignments");
-			System.out.println("         IsoformEM_Proteomics        | Infer most likely isoforms from MS/MS spectra mapping");
-			System.out.println("         CIGAR_2_PWM                 | Reads SAM alignments and converts the CIGAR strings to a position-weight matrix");
-			System.out.println("         ProcessEndogenousAlignments | Process endogenous smallRNA alignments for the exceRpt pipeline");
+			System.out.println("Command: GetSequenceLengths            | Get the distribution of sequence lengths in a FASTA/Q file");
+			System.out.println("         FastaHeaderGrep               | Filter fasta sequences based on the sequence ID");
+			System.out.println("         FilterFastxByIDList           | Filter fasta/q sequences based on a list of sequence IDs");
+			System.out.println("         FilterSequencesByLength       | Filter fasta or fastq sequences based on some maximum sequence length");
+			System.out.println("         ProcessFastqWithRandomBarcode | Filter fasta or fastq sequences based on some maximum sequence length");
+			System.out.println("         RemoveHomopolymerRepeats      | Filter fasta or fastq sequences based on sequence composition");
+			System.out.println("         MatchPairedEndSequences       | Match paired-end fastq sequences based on readID");
+			//System.out.println("         ModifyTophatHeaders        | re-formats fasta headers in the tophat-generated transcriptome for downstream compatibility with Thunder");
+			//System.out.println("         ListDBTables               | list the contents of a database");
+			System.out.println("         GTF2Fasta                     | Extract GTF coordinates from FASTA sequence(s)");
+			//System.out.println("         ReadAnnotation             | import annotation information in GTF to the database");
+			//System.out.println("         ReadVCF                    | import genotype data to the database");
+			//System.out.println("         CreatePersonalGenome       | create a personalised reference genome for a sample in the database");
+			//System.out.println("         ReadMzXML                  | import MS- and MS/MS-spectra to the database");
+			//System.out.println("         ReadTandem_toDB            | import X!Tandem MS/MS-spectra IDs to the database");
+			System.out.println("         ParseTandemOutput             | Process X!Tandem MS/MS-spectra alignments and output summary table");
+			System.out.println("         IsoformEM_Footprints          | Infer most likely transcripts from ribosome footprint alignments");
+			System.out.println("         IsoformEM_Proteomics          | Infer most likely isoforms from MS/MS spectra mapping");
+			System.out.println("         CIGAR_2_PWM                   | Reads SAM alignments and converts the CIGAR strings to a position-weight matrix");
+			System.out.println("         ProcessEndogenousAlignments   | Process endogenous smallRNA alignments for the exceRpt pipeline");
 			System.out.println();
 		}
 

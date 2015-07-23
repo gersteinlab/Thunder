@@ -9,8 +9,8 @@ import java.io.InputStreamReader;
 public class SequenceReader {
 
 	public static void main(String[] args) throws IOException {
-		SequenceReader reader = new SequenceReader("/Users/robk/WORK/YALE_offline/ANNOTATIONS/test.fa");
-		//SequenceReader reader = new SequenceReader("/Users/robk/Desktop/Box Documents/Astrid_HEEBOarrays/HEEBO_probes.fq");
+		//SequenceReader reader = new SequenceReader("/Users/robk/WORK/YALE_offline/ANNOTATIONS/test.fa");
+		SequenceReader reader = new SequenceReader("/Users/robk/Downloads/test.fq");
 		//SequenceReader reader = new SequenceReader(System.in);
 		
 		SequenceRecord tmp;
@@ -43,7 +43,8 @@ public class SequenceReader {
 	
 	
 	
-
+	private boolean isFastq = true;
+	private int lineCount = 0;
 	/**
 	 * 
 	 * @return
@@ -52,10 +53,16 @@ public class SequenceReader {
 	public SequenceRecord readNextRecord() throws IOException{
 		String line;
 		SequenceRecord toReturn = null;
-		
 		// Reads the first header in the file
 		if(thisSequenceID == null){
 			line=buffer.readLine();
+			//if(line.startsWith("@") || line.startsWith(">")){
+			if(line.startsWith("@")){
+				isFastq = true;
+				lineCount ++;
+			}else if(line.startsWith(">"))
+				isFastq = false;
+				
 			if(line.startsWith("@") || line.startsWith(">")){
 				thisSequenceID = line.substring(1).trim();
 			}
@@ -66,12 +73,15 @@ public class SequenceReader {
 		
 		boolean readingQual = false;
 		
-		// Read lines until the next fasta header
+		// Read lines until the next header
 		while((line=buffer.readLine()) != null){
-			if(line.startsWith("@") || line.startsWith(">")){
+			lineCount ++;
+			//if(line.startsWith("@") || line.startsWith(">")){
+			if(isFastq  &&  lineCount == 5){
 				thisSequenceID = line.substring(1).trim();
+				lineCount = 1;
 				break;
-			}else if(line.startsWith("+")){
+			}else if(line.startsWith("+")  &&  lineCount == 3){
 				readingQual = true;	
 			}else{
 				if(!readingQual)
