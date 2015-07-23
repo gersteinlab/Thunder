@@ -44,6 +44,8 @@ public class FootprintAlignmentSummary {
         
         double alignmentPValue;
         
+        private static HashMap<Integer, BigInteger> factorialCache = new HashMap<>();  // don't redo computations
+        
         TranscriptSummary(String transcriptID, String transcriptType, int totalReads, int maxAligned, int midAligned, int minAligned) {
             transcript = transcriptID;
             type = transcriptType;
@@ -56,13 +58,74 @@ public class FootprintAlignmentSummary {
         
         double getAlignmentPValue() {
             // find the absolute number of aligned reads by multiplying the total numberOfReads with the percentage that are in frame
-            double likelihood = getAlignmentPValueHelper(maxInFrame, midInFrame, minInFrame);
-            
-//            while (aligned < numberOfReads) {
-//                aligned++;
-//                likelihood += getAlignmentPValueHelper(aligned, (numberOfReads - aligned));
-//            }
-            return likelihood;
+            BigDecimal sum = new BigDecimal("0");  // in the end, we subtract `sum` from 1 to get a probability
+            BigDecimal factorialN = new BigDecimal(factorial(numberOfReads));  // factorial(n) converted to BigDecimal
+            BigInteger threePowerN = BigInteger.valueOf(3).pow(numberOfReads);
+            BigInteger denominator;  
+            // TODO : HASH PREVIOUSLY COMPUTED VALUES OF FACTORIAL 
+
+//            HashMap<Integer, BigInteger> factorialCache = new HashMap<>();
+
+            BigInteger iprime;
+            BigInteger jprime;
+            BigInteger mprime;
+
+
+    //        int m;
+            for (int i = 0; i < maxInFrame; i++) {
+                for (int j = 0; j < maxInFrame; j++) {
+                    if (j + i > numberOfReads) break; 
+                    for (int m = 0; m < maxInFrame; m++) {
+
+                        // the reason why this optimization doesn't work is because it allows m to be 0 multiple times within what would be the same loop. 
+                        // m should only equal 0 once.
+                        // the way this problem could arise is if you have k = 7. Both (i = 5, j = 2) and (j = 5, i = 2) make = 0; same goes for (i = 4, j = 3) and vice-versa. There are tons 
+                        // of combinations that allow m to be zero multiple times. 
+                        // TODO: CHECK TO SEE IF THIS PROBLEM MAKES SENSE. I THINK THE PROBLEM IS THAT IT'S AN OVERESTIMATION. IF THAT'S THE CASE, THEN FIGURE OUT WAYS TO SWITCH-ON SWITCH-OFF m.
+    //                    if (i + j <= n) {
+    //                        m = n - (i + j);
+    //                    } else {
+    //                        break;
+    //                    }
+
+    //                   
+                        if (i + j + m == numberOfReads) { 
+                            // multiply denominator a number of times
+                            if (factorialCache.containsKey(i)) {
+                                iprime = factorialCache.get(i);
+                            } else {
+                                iprime = factorial(i);
+                                factorialCache.put(i, iprime);
+                            }
+
+                            if (factorialCache.containsKey(j)) {
+                                jprime = factorialCache.get(j);
+                            } else {
+                                jprime = factorial(j);
+                                factorialCache.put(j, jprime);
+                            }
+
+                            if (factorialCache.containsKey(m)) {
+                                mprime = factorialCache.get(m);
+                            } else {
+                                mprime = factorial(m);
+                                factorialCache.put(m, mprime);
+                            }
+
+                            denominator = iprime.multiply(jprime);
+                            denominator = denominator.multiply(mprime);
+                            denominator = denominator.multiply(threePowerN);
+                            BigDecimal denominatorDecimal = new BigDecimal(denominator);
+                            denominatorDecimal = factorialN.divide(denominatorDecimal, 200, RoundingMode.HALF_UP);
+                            sum = sum.add(denominatorDecimal);
+                        } else if (i + j + m > numberOfReads) break;
+                    }
+                }
+            }
+
+    //        System.out.println(new BigDecimal("1").subtract(sum));
+
+            return new BigDecimal("1").subtract(sum).doubleValue();
             
         }
         
@@ -214,12 +277,51 @@ public class FootprintAlignmentSummary {
     public static BigInteger factorial(int n) {
         BigInteger result = BigInteger.ONE;
         while (n != 0) {
-            result = result.multiply(new BigInteger(n + ""));
+            result = result.multiply(BigInteger.valueOf(n));
             n--;
         }
         return result;
     } 
     
+//    static double getPValue(int n, int k, int m, int l) {
+//        
+//        double likelihood = getAlignmentPValueHelper(k, m, l);
+//        
+//        while (k < n) {
+//            
+//            
+//        }
+//        
+//        
+//    
+//    }
+    
+        static double getAlignmentPValueHelper(int maxAligned, int midAligned, int minAligned) {
+            int total = maxAligned + midAligned + minAligned;
+            BigDecimal likelihood = new BigDecimal("1");
+            likelihood = likelihood.multiply(new BigDecimal(pow(1/3d, total) + "")); 
+            BigInteger totalPrime  = factorial(total);
+            BigInteger maxPrime = factorial(maxAligned);
+            BigInteger midPrime = factorial(midAligned);
+            BigInteger minPrime = factorial(minAligned);
+            BigInteger denominator = maxPrime.multiply(midPrime.multiply(minPrime)); 
+            BigInteger multinomialFactor =  totalPrime.divide(denominator);
+            likelihood = likelihood.multiply(new BigDecimal(multinomialFactor));
+            
+            double d;  // d = 3! / (3 - numberOfDifferentlySizedBuckets)!
+            if (maxAligned == midAligned && midAligned == minAligned) d = 1;
+            else if (maxAligned != midAligned && midAligned == minAligned) d = 3;
+            else if (maxAligned == midAligned && midAligned != minAligned) d = 3;
+            else d = 6;
+            
+            likelihood = likelihood.multiply(new BigDecimal(d + "")); 
+
+            return likelihood.doubleValue();
+        }
+    
+    
+    
+
 
     
     /**
@@ -233,14 +335,25 @@ public class FootprintAlignmentSummary {
         
         FootprintAlignmentSummary summary = new FootprintAlignmentSummary(inputBamFile, outputFile, gencodeData);
         summary.createSummary();
-//        
-        TranscriptSummary sample = new TranscriptSummary("test", "type", 3, 3, 2, 2);
-//        System.out.println(sample.getAlignmentPValueHelper(1, 1, 0));
-        System.out.println(sample.alignmentPValue);
         
-        for (int i = 7; i > -1; i--) {
-            System.out.println("factorial " + i + " = " + factorial(i));
-        }
+        System.out.print("finished.");
+        
+         
+        
+//        int num = 400;
+////          
+//          double f = getAlignmentPValueHelper(num, 0, 0);
+//          System.out.println(f);
+////          
+//
+//        System.out.println(belowK2(num, num));
+        
+//        System.out.println(getAlignmentPValueHelper(2, 2, 0)); 
+        
+        
+        
+          
+        
         
         
     
