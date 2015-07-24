@@ -283,20 +283,8 @@ public class FootprintAlignmentSummary {
         return result;
     } 
     
-//    static double getPValue(int n, int k, int m, int l) {
-//        
-//        double likelihood = getAlignmentPValueHelper(k, m, l);
-//        
-//        while (k < n) {
-//            
-//            
-//        }
-//        
-//        
-//    
-//    }
-    
-        static double getAlignmentPValueHelper(int maxAligned, int midAligned, int minAligned) {
+
+        static double helper(int maxAligned, int midAligned, int minAligned) {
             int total = maxAligned + midAligned + minAligned;
             BigDecimal likelihood = new BigDecimal("1");
             likelihood = likelihood.multiply(new BigDecimal(pow(1/3d, total) + "")); 
@@ -329,33 +317,183 @@ public class FootprintAlignmentSummary {
      */
     public static void main(String[] args) throws IOException {
 
-        File inputBamFile = new File("/Users/jdmcpeek/FootprintAlignments/data/sorted.bam");
-        File outputFile = new File("./data/outTest.txt");
-        File gencodeData = new File("./data/gencode.v21.transcripts.gtf.txt"); 
-        
-        FootprintAlignmentSummary summary = new FootprintAlignmentSummary(inputBamFile, outputFile, gencodeData);
-        summary.createSummary();
-        
-        System.out.print("finished.");
+//        File inputBamFile = new File("/Users/jdmcpeek/FootprintAlignments/data/sorted.bam");
+//        File outputFile = new File("./data/outTest.txt");
+//        File gencodeData = new File("./data/gencode.v21.transcripts.gtf.txt"); 
+//        
+//        FootprintAlignmentSummary summary = new FootprintAlignmentSummary(inputBamFile, outputFile, gencodeData);
+//        summary.createSummary();
+//        
+//        System.out.print("finished.");
         
          
         
-//        int num = 400;
-////          
-//          double f = getAlignmentPValueHelper(num, 0, 0);
-//          System.out.println(f);
-////          
-//
-//        System.out.println(belowK2(num, num));
+        int num = 400;
+//          
+          double f = helper(num, 0, 0);
+          System.out.println(f);
+//          
+
+        System.out.println(belowK2(5, 2));
         
-//        System.out.println(getAlignmentPValueHelper(2, 2, 0)); 
+//        double sum = helper(2, 1, 1) + helper(2, 0, 2) + helper(2, 2, 0) + helper(3,0,1) + helper(3, 1,0) + helper(4, 0, 0);
+//        double sum2 = helper(2, 1, 1) + helper(2, 2, 0) + helper(3,0,1) + helper(4, 0, 0);
+//        
+//        System.out.println(sum2);
+//        
+        double sum = helper(3, 1, 1) + helper(3, 0, 2) + helper(4,0,1) + helper(5, 0, 0) + helper(2, 2, 1);
+        System.out.println(sum);
+        
+        
+        System.out.println(belowK2(8, 4));
+        
+        sum = helper(4, 2, 2) + helper(4, 1, 3) + helper(4, 0, 4)/2 + helper(5, 1, 2) + helper(5, 0, 3) + helper(6, 1, 1) + helper(6, 0, 2) + helper(7, 0, 1) + helper(8,0, 0); 
+        System.out.println(sum);
+        
+        
+        System.out.println(belowK2(3, 1)); 
+        sum = helper(1, 1, 1) + helper(2, 1, 0) + helper(3, 0 ,0); 
+        System.out.println(sum);
         
         
         
-          
+        System.out.println("========================");
+        
+        // this method works for cases when k > 0.4N
+        
+        int n = 10;
+        int k = 5;
+        
+        System.out.println(belowK2(n, k)); 
+        // find the probability of getting k similar alignments OR BETTER.
+        int bigBucket = n;
+        sum = 0;
+        
+        while (bigBucket >= k) {
+            // what's left for the other buckets
+            int left = n - bigBucket;
+            int middleBucket = left;
+            int smallBucket = 0;
+            
+//            if (left > k) {
+//                break;
+//            }
+            
+            if (left < 2) {
+                sum += helper(bigBucket, left, 0);
+            } else if (left % 2 == 0) {  // even cases
+                sum += helper(bigBucket, left/2, left/2);  // the last case. We're doing it here to avoid a weird while loop
+                while (middleBucket != smallBucket) {
+                    double term = helper(bigBucket, middleBucket, smallBucket);
+                    if (bigBucket == middleBucket) {
+                        sum += term/2;  // avoid duplicates
+                    } else {
+                        sum += term;
+                    }
+                    middleBucket--;
+                    smallBucket++; 
+                }
+            } else if (left % 2 == 1) {  // odd cases
+                sum += helper(bigBucket, 1 + left/2, left/2);
+                while (middleBucket - 1 != smallBucket) {
+                    double term = helper(bigBucket, middleBucket, smallBucket);
+                    if (bigBucket == middleBucket) {
+                        sum += term/2;  // avoid duplicates
+                    } else {
+                        sum += term;
+                    }
+                    middleBucket--;
+                    smallBucket++; 
+                }
+            }
+            
+            bigBucket--;
+        }
+        
+        System.out.println(sum);
+        
+        
+        
+        
+//        double test = helper(6, 0, 0) + helper(5, 1, 0) + helper(4,2,0) + helper(4,1,1) + helper(3, 3, 0) +helper(3,2,1);
+//        System.out.println(test);
+//          
         
         
         
     
     }
+    
+    static double belowK2(int n, int k) {
+            // find the absolute number of aligned reads by multiplying the total numberOfReads with the percentage that are in frame
+            BigDecimal sum = new BigDecimal("0");  // in the end, we subtract `sum` from 1 to get a probability
+            BigDecimal factorialN = new BigDecimal(factorial(n));  // factorial(n) converted to BigDecimal
+            BigInteger threePowerN = BigInteger.valueOf(3).pow(n);
+            BigInteger denominator;  
+            // TODO : HASH PREVIOUSLY COMPUTED VALUES OF FACTORIAL 
+
+            HashMap<Integer, BigInteger> factorialCache = new HashMap<>();
+
+            BigInteger iprime;
+            BigInteger jprime;
+            BigInteger mprime;
+
+
+    //        int m;
+            for (int i = 0; i < k; i++) {
+                for (int j = 0; j < k; j++) {
+                    if (j + i > n) break; 
+                    for (int m = 0; m < k; m++) {
+
+                        // the reason why this optimization doesn't work is because it allows m to be 0 multiple times within what would be the same loop. 
+                        // m should only equal 0 once.
+                        // the way this problem could arise is if you have k = 7. Both (i = 5, j = 2) and (j = 5, i = 2) make = 0; same goes for (i = 4, j = 3) and vice-versa. There are tons 
+                        // of combinations that allow m to be zero multiple times. 
+                        // TODO: CHECK TO SEE IF THIS PROBLEM MAKES SENSE. I THINK THE PROBLEM IS THAT IT'S AN OVERESTIMATION. IF THAT'S THE CASE, THEN FIGURE OUT WAYS TO SWITCH-ON SWITCH-OFF m.
+    //                    if (i + j <= n) {
+    //                        m = n - (i + j);
+    //                    } else {
+    //                        break;
+    //                    }
+
+    //                   
+                        if (i + j + m == n) { 
+                            // multiply denominator a number of times
+                            if (factorialCache.containsKey(i)) {
+                                iprime = factorialCache.get(i);
+                            } else {
+                                iprime = factorial(i);
+                                factorialCache.put(i, iprime);
+                            }
+
+                            if (factorialCache.containsKey(j)) {
+                                jprime = factorialCache.get(j);
+                            } else {
+                                jprime = factorial(j);
+                                factorialCache.put(j, jprime);
+                            }
+
+                            if (factorialCache.containsKey(m)) {
+                                mprime = factorialCache.get(m);
+                            } else {
+                                mprime = factorial(m);
+                                factorialCache.put(m, mprime);
+                            }
+
+                            denominator = iprime.multiply(jprime);
+                            denominator = denominator.multiply(mprime);
+                            denominator = denominator.multiply(threePowerN);
+                            BigDecimal denominatorDecimal = new BigDecimal(denominator);
+                            denominatorDecimal = factorialN.divide(denominatorDecimal, 200, RoundingMode.HALF_UP);
+                            sum = sum.add(denominatorDecimal);
+                        } else if (i + j + m > n) break;
+                    }
+                }
+            }
+
+    //        System.out.println(new BigDecimal("1").subtract(sum));
+
+            return new BigDecimal("1").subtract(sum).doubleValue();
+            
+        }
 }
