@@ -253,6 +253,23 @@ public class FootprintAlignmentSummary {
         return result;
     } 
     
+    public static void writeMapToFile(Map map, File file) {
+        try(BufferedWriter outputFile = new BufferedWriter(new FileWriter(file))) {
+            Iterator it = map.entrySet().iterator();
+            outputFile.write("\"transcript.id\"\t\"transcript.type\"");
+            outputFile.newLine();
+            while (it.hasNext()) {
+                Map.Entry pair = (Map.Entry)it.next();
+                outputFile.write(pair.getKey() + "\t" + pair.getValue());
+                outputFile.newLine();
+                
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(FootprintAlignmentSummary.class.getName()).log(Level.SEVERE, null, ex);
+        }
+                
+
+    }
 
     
     /**
@@ -263,9 +280,15 @@ public class FootprintAlignmentSummary {
         File inputBamFile = new File("/Users/jdmcpeek/FootprintAlignments/data/sorted.bam");
         File outputFile = new File("./data/outTest3.txt");
         File gencodeData = new File("./data/gencode.v21.transcripts.gtf.txt"); 
-        
+//        
         FootprintAlignmentSummary summary = new FootprintAlignmentSummary(inputBamFile, outputFile, gencodeData);
         summary.createSummary();
+//        
+        
+        
+        
+//        writeMapToFile(summary.transcriptTypeMap, new File("./data/transcriptTypeMap.txt"));
+     
 
     
     }
