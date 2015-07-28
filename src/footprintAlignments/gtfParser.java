@@ -14,7 +14,7 @@ import java.util.logging.Logger;
  */
 public class gtfParser {
     private final File gtfFile;
-    private final HashMap<String, String> transcriptTypeMap = new HashMap<>();
+    private final HashMap<String, String> transcriptTypeMap = new HashMap<String, String>();
     
     
     // Wait, do I actually NEED unique transcripts here? No. I'll just store all transcripts in this hashmap.
@@ -29,13 +29,15 @@ public class gtfParser {
     }
 
     
-    private void getTranscriptTypes() { 
+    private void getTranscriptTypes() throws IOException { 
 
         String thisEntry;
         String transcriptID;
         String transcriptType;
-
-        try (BufferedReader gtf = new BufferedReader(new FileReader(gtfFile))) {
+        BufferedReader gtf = null;
+            
+        try {
+            gtf = new BufferedReader(new FileReader(gtfFile));
             
             while((thisEntry = gtf.readLine()) != null) {
 
@@ -50,6 +52,8 @@ public class gtfParser {
             } 
         } catch (IOException ex) {
             Logger.getLogger(gtfParser.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            if (gtf != null) gtf.close(); 
         } 
         
         

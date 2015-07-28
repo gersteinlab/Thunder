@@ -26,8 +26,9 @@ public class FootprintAlignmentSummary {
     File inputSortedBamFile = null;
     File outputSummaryFile = null;
     HashMap<String, String> transcriptTypeMap = null;
-    private static HashMap<Integer, BigInteger> factorialCache = new HashMap<>();  // don't redo computations
+    private static final HashMap<Integer, BigInteger> factorialCache = new HashMap<Integer, BigInteger>();  // don't redo computations
     // TODO: perhaps have some other interfaces if clients already have the gencode data
+
     
     public FootprintAlignmentSummary(File inputSortedBamFile, File outputSummaryFile, File gencodeDataFile) throws IOException {
         this.inputSortedBamFile = inputSortedBamFile;
@@ -120,6 +121,8 @@ public class FootprintAlignmentSummary {
 //            return likelihood.doubleValue();
 //        }
         
+       
+        
 
        public void writeSummaryToFile(BufferedWriter outputFile) throws IOException {
             outputFile.write(transcript + "\t");
@@ -138,13 +141,18 @@ public class FootprintAlignmentSummary {
     
     public void createSummary() throws IOException {
         
-        try (SAMFileReader inputBam = new SAMFileReader(inputSortedBamFile);
-                BufferedWriter outputFile = new BufferedWriter(new FileWriter(this.outputSummaryFile))) {
+        SAMFileReader inputBam = null;
+        BufferedWriter outputFile = null;
+        
+        try {
+            
+            inputBam = new SAMFileReader(inputSortedBamFile);
+            outputFile = new BufferedWriter(new FileWriter(this.outputSummaryFile));
             
             // large array of individual transcript summaries that we're eventually going to write to a file
-            ArrayList<TranscriptSummary> transcriptSummaries = new ArrayList<>();
+            ArrayList<TranscriptSummary> transcriptSummaries = new ArrayList<TranscriptSummary>();
             
-            Map<String, ArrayList<SAMRecord>> transcriptMap = new HashMap<>();
+            Map<String, ArrayList<SAMRecord>> transcriptMap = new HashMap<String, ArrayList<SAMRecord>>();
             
             for (final SAMRecord samRecord : inputBam) {
                 // we're only looking at reads that match 29 base pairs
@@ -156,7 +164,7 @@ public class FootprintAlignmentSummary {
                 if (transcriptMap.containsKey(transcriptID)) {
                     transcriptMap.get(transcriptID).add(samRecord);
                 } else {
-                    ArrayList<SAMRecord> sameTranscriptReads = new ArrayList<>();
+                    ArrayList<SAMRecord> sameTranscriptReads = new ArrayList<SAMRecord>();
                     sameTranscriptReads.add(samRecord);
                     transcriptMap.put(transcriptID, sameTranscriptReads);
                 }
@@ -179,7 +187,7 @@ public class FootprintAlignmentSummary {
                 ArrayList<SAMRecord> reads = thisTranscript.getValue();
                 int totalReads = reads.size();
                 
-                HashMap<Integer, Integer> readFrames = new HashMap<>();
+                HashMap<Integer, Integer> readFrames = new HashMap<Integer, Integer>();
                 readFrames.put(0, 0);
                 readFrames.put(1, 0);
                 readFrames.put(2, 0);
@@ -209,6 +217,9 @@ public class FootprintAlignmentSummary {
         } catch (IOException ex) {
             Logger.getLogger(FootprintAlignmentSummary.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
+            if (inputBam != null) inputBam.close();
+            if (outputFile != null) outputFile.close();
+               
             System.out.println("You finished, yay!!!!");
         }
         
@@ -253,8 +264,10 @@ public class FootprintAlignmentSummary {
         return result;
     } 
     
-    public static void writeMapToFile(Map map, File file) {
-        try(BufferedWriter outputFile = new BufferedWriter(new FileWriter(file))) {
+    public static void writeMapToFile(Map map, File file) throws IOException {
+        BufferedWriter outputFile = null;
+        try {
+            outputFile = new BufferedWriter(new FileWriter(file));
             Iterator it = map.entrySet().iterator();
             outputFile.write("\"transcript.id\"\t\"transcript.type\"");
             outputFile.newLine();
@@ -266,10 +279,20 @@ public class FootprintAlignmentSummary {
             }
         } catch (IOException ex) {
             Logger.getLogger(FootprintAlignmentSummary.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            if (outputFile != null) outputFile.close();
         }
                 
 
     }
+
+ 
+    
+    // create a function that computes the significance of a set of alignments.
+    // returns true/false if it falls below the critical value, the necessary level of significance.
+    // public boolean chiSquaredTest();
+
+    
 
     
     /**
