@@ -30,9 +30,28 @@ public class bestAlignmentPatternIdentifier {
         this.transcriptToGeneMap = new gtfParser(gencodeDataFile).getTranscriptGenes();
     }
     
-    public Map<String, ArrayList<String>> getReadTranscriptMap() throws IOException {
-        Map<String, ArrayList<String>> readToTranscriptMap; 
-        readToTranscriptMap = new HashMap<String, ArrayList<String>>();
+   
+    
+    
+    public Map<String, ArrayList<String>> getTranscriptToReadMap() throws IOException {
+        Map<String, ArrayList<String>> transcriptToReadMap = new HashMap<String, ArrayList<String>>();
+        SAMFileReader inputBam = new SAMFileReader(inputSortedBamFile);
+        
+        for (final SAMRecord samRecord : inputBam) {
+            String transcriptID = samRecord.getReferenceName();
+            String readName = samRecord.getReadName();
+            
+            if (transcriptToReadMap.containsKey(transcriptID)) {
+                transcriptToReadMap.get(transcriptID).add(readName);
+            } else {
+                transcriptToReadMap.put(transcriptID, new ArrayList<String>(Arrays.asList(readName))); 
+            }
+        }
+        return transcriptToReadMap;
+    }
+    
+    public Map<String, ArrayList<String>> getReadToTranscriptMap() throws IOException {
+        Map<String, ArrayList<String>> readToTranscriptMap = new HashMap<String, ArrayList<String>>();
         SAMFileReader inputBam = new SAMFileReader(inputSortedBamFile);
         for (final SAMRecord samRecord : inputBam) {
             String transcriptID = samRecord.getReferenceName();
@@ -62,6 +81,7 @@ public class bestAlignmentPatternIdentifier {
                 uniqueGenes.add(nextGene);
             }
             
+            // If the read matches transcripts that together belong to multifarious genes, toss that read out. It is of no use to us. 
             if (uniqueGenes.size() > 1) {
                 it.remove();
             }
@@ -77,13 +97,13 @@ public class bestAlignmentPatternIdentifier {
         bestAlignmentPatternIdentifier test;
         test = new bestAlignmentPatternIdentifier(new File("./data/fullFootPrintAlignment.sorted.bam"), new File("./data/gencode.v21.transcripts.gtf.txt"));
         
-        Map<String, ArrayList<String>> readTranscriptMap = test.getReadTranscriptMap(); 
+        Map<String, ArrayList<String>> readTranscriptMap = test.getTranscriptToReadMap(); 
         
         
         Iterator it = readTranscriptMap.entrySet().iterator();
         
         BufferedWriter testAgain;
-        testAgain = new BufferedWriter(new FileWriter("./data/testAgain.txt"));
+        testAgain = new BufferedWriter(new FileWriter("./data/transcriptToReadMap.txt"));
         
         while(it.hasNext()){
             Map.Entry pair = (Map.Entry)it.next();
