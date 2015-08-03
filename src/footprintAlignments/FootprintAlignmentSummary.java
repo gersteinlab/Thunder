@@ -22,18 +22,18 @@ import java.util.logging.Logger;
  * @author J. David McPeek
  */
 public class FootprintAlignmentSummary {
-    
     File inputSortedBamFile = null;
     File outputSummaryFile = null;
     HashMap<String, String> transcriptTypeMap = null;
+    int numberOfTests;  // the number of transcripts (hypotheses). This will be used to determine our new p-value adjusted multiple testing correction. 
+    double adjustedPValue;
+    int minimumNumberOfReads;
     private static final HashMap<Integer, BigInteger> factorialCache = new HashMap<Integer, BigInteger>();  // don't redo computations
     // TODO: perhaps have some other interfaces if clients already have the gencode data
-
-    
     public FootprintAlignmentSummary(File inputSortedBamFile, File outputSummaryFile, File gencodeDataFile) throws IOException {
         this.inputSortedBamFile = inputSortedBamFile;
         this.outputSummaryFile = outputSummaryFile;
-        this.transcriptTypeMap = new gtfParser(gencodeDataFile).getTypeMap(); 
+        this.transcriptTypeMap = new gtfParser(gencodeDataFile).getTranscriptTypes(); 
     }
     
     protected static class TranscriptSummary {
@@ -45,11 +45,9 @@ public class FootprintAlignmentSummary {
         int minInFrame;  
         
         double alignmentPValue;
-        double adjustedScore;
+        boolean significance;
         
-        
-        
-        TranscriptSummary(String transcriptID, String transcriptType, int totalReads, int maxAligned, int midAligned, int minAligned, int numberOfTests) {
+        TranscriptSummary(String transcriptID, String transcriptType, int totalReads, int maxAligned, int midAligned, int minAligned, double adjustedPValue) {
             transcript = transcriptID;
             type = transcriptType;
             numberOfReads = totalReads;
@@ -57,12 +55,12 @@ public class FootprintAlignmentSummary {
             midInFrame = midAligned;
             minInFrame = minAligned;
             alignmentPValue = this.getAlignmentPValue();
-            adjustedScore = alignmentPValue * numberOfTests;
+            significance = alignmentPValue <= adjustedPValue;
         }
         
         double getAlignmentPValue() {
             // find the absolute number of aligned reads by multiplying the total numberOfReads with the percentage that are in frame
-            BigInteger sum = new BigInteger("0");  // in the end, we subtract `sum` from 1 to get a probability
+            BigDecimal sum = new BigDecimal("0");  // in the end, we subtract `sum` from 1 to get a probability
 
             for (int i = 0; i < maxInFrame; i++) {
                 for (int j = 0; j < maxInFrame; j++) {
@@ -75,15 +73,15 @@ public class FootprintAlignmentSummary {
                 }
             }
 
-            BigInteger totalPossibilities = BigInteger.valueOf(3).pow(numberOfReads);
-            BigInteger matches = totalPossibilities.subtract(sum);
+            BigDecimal totalPossibilities = BigDecimal.valueOf(3).pow(numberOfReads);
+            BigDecimal matches = totalPossibilities.subtract(sum);
             
-            return new BigDecimal(matches).divide(new BigDecimal(totalPossibilities), 200, RoundingMode.HALF_UP).doubleValue(); 
+            return matches.divide(totalPossibilities, 200, RoundingMode.HALF_UP).doubleValue(); 
             
         }
         
-        private BigInteger binPatterns(int n, int j, int m, int t) {
-            return getFactorial(n).divide(getFactorial(j).multiply(getFactorial(m)).multiply(getFactorial(t)));
+        private BigDecimal binPatterns(int n, int j, int m, int t) {
+            return new BigDecimal(getFactorial(n)).divide(new BigDecimal(getFactorial(j).multiply(getFactorial(m)).multiply(getFactorial(t))), 200, RoundingMode.HALF_UP);
         }
         
         private BigInteger getFactorial(int n) {
@@ -96,33 +94,6 @@ public class FootprintAlignmentSummary {
             }
         }
         
-        
-        
-//        double getAlignmentPValueHelper(int maxAligned, int midAligned, int minAligned) {
-//            int total = maxAligned + midAligned + minAligned;
-//            BigDecimal likelihood = new BigDecimal("1");
-//            likelihood = likelihood.multiply(new BigDecimal(pow(1/3d, total) + "")); 
-//            BigInteger totalPrime  = factorial(total);
-//            BigInteger maxPrime = factorial(maxAligned);
-//            BigInteger midPrime = factorial(midAligned);
-//            BigInteger minPrime = factorial(minAligned);
-//            BigInteger denominator = maxPrime.multiply(midPrime.multiply(minPrime)); 
-//            BigInteger multinomialFactor =  totalPrime.divide(denominator);
-//            likelihood = likelihood.multiply(new BigDecimal(multinomialFactor));
-//            
-//            double d;  // d = 3! / (3 - numberOfDifferentlySizedBuckets)!
-//            if (maxAligned == midAligned && midAligned == minAligned) d = 1;
-//            else if (maxAligned != midAligned && midAligned == minAligned) d = 3;
-//            else if (maxAligned == midAligned && midAligned != minAligned) d = 3;
-//            else d = 6;
-//            
-//            likelihood = likelihood.multiply(new BigDecimal(d + "")); 
-//
-//            return likelihood.doubleValue();
-//        }
-        
-       
-        
 
        public void writeSummaryToFile(BufferedWriter outputFile) throws IOException {
             outputFile.write(transcript + "\t");
@@ -132,7 +103,7 @@ public class FootprintAlignmentSummary {
             outputFile.write(String.valueOf(midInFrame + "\t"));
             outputFile.write(String.valueOf(minInFrame + "\t"));
             outputFile.write(String.valueOf(alignmentPValue + "\t"));
-            outputFile.write(String.valueOf(adjustedScore)); 
+            outputFile.write(String.valueOf(significance));
             outputFile.newLine();
        }
         
@@ -170,12 +141,20 @@ public class FootprintAlignmentSummary {
                 }
                 
             }
+
+            this.numberOfTests = transcriptMap.size();
+            this.adjustedPValue = 0.05 / this.numberOfTests; 
+            
+            minimumNumberOfReads = (int) Math.ceil(Math.log(adjustedPValue) / Math.log(1/3d)) + 1;
+            
+            System.out.println(minimumNumberOfReads);
+            
             
             Iterator<HashMap.Entry<String, ArrayList<SAMRecord>>> it = transcriptMap.entrySet().iterator();
             
-            int numberOfTranscripts = transcriptMap.size();
+
             
-            String fileHeader = "\"transcript.id\"\t\"transcript.type\"\t\"total.reads\"\t\"aligned.max\"\t\"alignment.mid\"\t\"alignment.min\"\t\"alignment.score\"\t\"adjusted.score\"";
+            String fileHeader = "\"transcript_id\"\t\"transcript_type\"\t\"total_reads\"\t\"max_aligned\"\t\"mid_aligned\"\t\"min_aligned\"\t\"alignment_score\"\t\"significant?\"";
             outputFile.write(fileHeader);
             outputFile.newLine();
             
@@ -207,7 +186,7 @@ public class FootprintAlignmentSummary {
                 
                 
                 
-                TranscriptSummary thisSummary = new TranscriptSummary(transcriptID, transcriptType, totalReads, maxAligned, midAligned, minAligned, numberOfTranscripts);
+                TranscriptSummary thisSummary = new TranscriptSummary(transcriptID, transcriptType, totalReads, maxAligned, midAligned, minAligned, adjustedPValue);
                 transcriptSummaries.add(thisSummary);
                 
                 thisSummary.writeSummaryToFile(outputFile);
@@ -263,36 +242,6 @@ public class FootprintAlignmentSummary {
         }
         return result;
     } 
-    
-    public static void writeMapToFile(Map map, File file) throws IOException {
-        BufferedWriter outputFile = null;
-        try {
-            outputFile = new BufferedWriter(new FileWriter(file));
-            Iterator it = map.entrySet().iterator();
-            outputFile.write("\"transcript.id\"\t\"transcript.type\"");
-            outputFile.newLine();
-            while (it.hasNext()) {
-                Map.Entry pair = (Map.Entry)it.next();
-                outputFile.write(pair.getKey() + "\t" + pair.getValue());
-                outputFile.newLine();
-                
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(FootprintAlignmentSummary.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            if (outputFile != null) outputFile.close();
-        }
-                
-
-    }
-
- 
-    
-    // create a function that computes the significance of a set of alignments.
-    // returns true/false if it falls below the critical value, the necessary level of significance.
-    // public boolean chiSquaredTest();
-
-    
 
     
     /**
@@ -301,20 +250,15 @@ public class FootprintAlignmentSummary {
     public static void main(String[] args) throws IOException {
 
         File inputBamFile = new File("/Users/jdmcpeek/FootprintAlignments/data/sorted.bam");
-        File outputFile = new File("./data/outTest3.txt");
+        File outputFile = new File("./data/outTest2.txt");
         File gencodeData = new File("./data/gencode.v21.transcripts.gtf.txt"); 
-//        
+        
         FootprintAlignmentSummary summary = new FootprintAlignmentSummary(inputBamFile, outputFile, gencodeData);
         summary.createSummary();
-//        
-        
         
         
 //        writeMapToFile(summary.transcriptTypeMap, new File("./data/transcriptTypeMap.txt"));
-     
-
     
     }
-    
 
 }
