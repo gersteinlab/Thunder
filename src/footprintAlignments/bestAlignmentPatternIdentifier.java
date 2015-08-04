@@ -57,7 +57,7 @@ public class bestAlignmentPatternIdentifier {
                 int readFrameBin;
                 for (SAMRecord otherRead : otherReads) {
                     readFrameBin = otherRead.getAlignmentStart() % 3;
-                    if (otherRead.getReferenceName() == null ? readInQuestion == null : otherRead.getReferenceName().equals(readInQuestion)) {
+                    if (otherRead.getReadName() == null ? readInQuestion == null : otherRead.getReadName().equals(readInQuestion)) {
                         desiredBin = readFrameBin;
                     }
                     bins[readFrameBin] = bins[readFrameBin] + 1;
@@ -69,7 +69,7 @@ public class bestAlignmentPatternIdentifier {
                     fractionAligned = bins[desiredBin] / (double) (bins[0] + bins[1] + bins[2]);
                 }catch (ArrayIndexOutOfBoundsException ex) {
                     // we want to make sure out catch block doesn't actually quit the program. Null values (-1) are acceptable in our matrix because that signifies that the transcript doesn't contain that read!
-                    Logger.getLogger(FootprintAlignmentSummary.class.getName()).log(Level.SEVERE, null, ex);
+//                    Logger.getLogger(FootprintAlignmentSummary.class.getName()).log(Level.SEVERE, null, ex);
                     System.out.println("Something is wrong with your logic. There should exist a read that corresponds to your read in question.");
                 } finally {
                     alignmentMatrix.get(readInQuestion).put(transcript, fractionAligned);
@@ -149,15 +149,12 @@ public class bestAlignmentPatternIdentifier {
         
         Map<String, Map<String, Double>> alignmentMatrix = test.getAlignmentMatrix();
         
-//        System.setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream("./data/test.txt"))));
+        System.setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream("./data/test.txt"))));
         
-        Iterator it = alignmentMatrix.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<String, Map<String, Double>> entry = (Map.Entry)it.next(); 
+        
+        for (Map.Entry<String, Map<String, Double>> entry : alignmentMatrix.entrySet()) {
             System.out.println(entry.getKey());
-            Iterator innerIt = entry.getValue().entrySet().iterator();
-            while(innerIt.hasNext()) {
-               Map.Entry<String, Double> pair = (Map.Entry)it.next();
+            for (Map.Entry<String, Double> pair : entry.getValue().entrySet()) {
                System.out.println("\t" + pair.getKey() + " -> " + pair.getValue());
             }
             System.out.println();
