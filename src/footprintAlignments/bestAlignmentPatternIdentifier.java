@@ -1,10 +1,13 @@
 package footprintAlignments;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import net.sf.samtools.*;
 import java.io.File;
 import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -30,21 +33,68 @@ public class bestAlignmentPatternIdentifier {
         this.transcriptToGeneMap = new gtfParser(gencodeDataFile).getTranscriptGenes();
     }
     
+    
+    public Map<String, Map<String, Double>> getAlignmentMatrix() throws IOException {
+        Map<String, ArrayList<String>> readToTranscriptMap = getReadToTranscriptMap();
+        Map<String, ArrayList<SAMRecord>> transcriptToReadMap = getTranscriptToReadMap();
+        Map<String, Map<String, Double>> alignmentMatrix = new HashMap();
+        for (Map.Entry pair : readToTranscriptMap.entrySet()) {
+            String readInQuestion = (String) pair.getKey();
+            ArrayList<String> transcripts = (ArrayList<String>) pair.getValue();
+            
+            alignmentMatrix.put(readInQuestion, new HashMap<String, Double>());
+            // i somehow need to get the offset value for this read on this specific transcript. how do i do that?
+            // iterate through `transcripts`
+            // get the offset of every read in each transcript
+            //      for each read, tally up the number of other reads that align. Divide by the total. If there are no other reads on that transcript, this value should be... null?
+            for (String transcript : transcripts) {
+                // for every transcript that this read might belong to
+                
+                int[] bins = {0, 0, 0};  // tally the mod-3 values (buckets 0, 1, and 2)
+                // other reads on that transcript
+                ArrayList<SAMRecord> otherReads = transcriptToReadMap.get(transcript);
+                int desiredBin = -1;  // initialize to something
+                int readFrameBin;
+                for (SAMRecord otherRead : otherReads) {
+                    readFrameBin = otherRead.getAlignmentStart() % 3;
+                    if (otherRead.getReferenceName() == null ? readInQuestion == null : otherRead.getReferenceName().equals(readInQuestion)) {
+                        desiredBin = readFrameBin;
+                    }
+                    bins[readFrameBin] = bins[readFrameBin] + 1;
+                }
+                double fractionAligned = -1; 
+                // if fractionAligned hasn't changed from 1, we're going to have an array exception, and we're going to put -1 on that cell of the matrix
+                try {
+                    // we're counting fractionAligned by how many reads were in the desired bucket, and dividing that value by the total number of reads. So if there's only 1 read, that's always 100% aligned
+                    fractionAligned = bins[desiredBin] / (double) (bins[0] + bins[1] + bins[2]);
+                }catch (ArrayIndexOutOfBoundsException ex) {
+                    // we want to make sure out catch block doesn't actually quit the program. Null values (-1) are acceptable in our matrix because that signifies that the transcript doesn't contain that read!
+                    Logger.getLogger(FootprintAlignmentSummary.class.getName()).log(Level.SEVERE, null, ex);
+                    System.out.println("Something is wrong with your logic. There should exist a read that corresponds to your read in question.");
+                } finally {
+                    alignmentMatrix.get(readInQuestion).put(transcript, fractionAligned);
+                }
+            }
+        }
+        
+        
+        return alignmentMatrix; 
+    
+    }
    
     
-    
-    public Map<String, ArrayList<String>> getTranscriptToReadMap() throws IOException {
-        Map<String, ArrayList<String>> transcriptToReadMap = new HashMap<String, ArrayList<String>>();
+    // the values of this hash table are arraylists that hold SAMRecords. 
+    public Map<String, ArrayList<SAMRecord>> getTranscriptToReadMap() throws IOException {
+        Map<String, ArrayList<SAMRecord>> transcriptToReadMap = new HashMap<String, ArrayList<SAMRecord>>();
         SAMFileReader inputBam = new SAMFileReader(inputSortedBamFile);
         
         for (final SAMRecord samRecord : inputBam) {
             String transcriptID = samRecord.getReferenceName();
-            String readName = samRecord.getReadName();
             
             if (transcriptToReadMap.containsKey(transcriptID)) {
-                transcriptToReadMap.get(transcriptID).add(readName);
+                transcriptToReadMap.get(transcriptID).add(samRecord);
             } else {
-                transcriptToReadMap.put(transcriptID, new ArrayList<String>(Arrays.asList(readName))); 
+                transcriptToReadMap.put(transcriptID, new ArrayList<SAMRecord>(Arrays.asList(samRecord))); 
             }
         }
         return transcriptToReadMap;
@@ -76,8 +126,8 @@ public class bestAlignmentPatternIdentifier {
             
             Set<String> uniqueGenes = new HashSet<String>();
             
-            for (int i = 0; i < transcripts.size(); i++) {
-                String nextGene = transcriptToGeneMap.get(transcripts.get(i));
+            for (String transcript : transcripts) {
+                String nextGene = transcriptToGeneMap.get(transcript);
                 uniqueGenes.add(nextGene);
             }
             
@@ -92,27 +142,27 @@ public class bestAlignmentPatternIdentifier {
     
     
     public static void main(String[] args) throws IOException { 
-        System.out.println("test");
+        System.out.println("bestAlignmentPatternIdentifier.java");
         
         bestAlignmentPatternIdentifier test;
         test = new bestAlignmentPatternIdentifier(new File("./data/fullFootPrintAlignment.sorted.bam"), new File("./data/gencode.v21.transcripts.gtf.txt"));
         
-        Map<String, ArrayList<String>> readTranscriptMap = test.getTranscriptToReadMap(); 
+        Map<String, Map<String, Double>> alignmentMatrix = test.getAlignmentMatrix();
         
+//        System.setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream("./data/test.txt"))));
         
-        Iterator it = readTranscriptMap.entrySet().iterator();
-        
-        BufferedWriter testAgain;
-        testAgain = new BufferedWriter(new FileWriter("./data/transcriptToReadMap.txt"));
-        
-        while(it.hasNext()){
-            Map.Entry pair = (Map.Entry)it.next();
-            testAgain.write(pair.getKey() + "  -  " + pair.getValue()); 
-            testAgain.newLine();
+        Iterator it = alignmentMatrix.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, Map<String, Double>> entry = (Map.Entry)it.next(); 
+            System.out.println(entry.getKey());
+            Iterator innerIt = entry.getValue().entrySet().iterator();
+            while(innerIt.hasNext()) {
+               Map.Entry<String, Double> pair = (Map.Entry)it.next();
+               System.out.println("\t" + pair.getKey() + " -> " + pair.getValue());
+            }
+            System.out.println();
+            
         }
-        
-        
     }
-    
 }
 
