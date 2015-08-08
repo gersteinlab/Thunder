@@ -67,9 +67,9 @@ public class bestAlignmentPatternIdentifier {
                 try {
                     // we're counting fractionAligned by how many reads were in the desired bucket, and dividing that value by the total number of reads. So if there's only 1 read, that's always 100% aligned
                     fractionAligned = bins[desiredBin] / (double) (bins[0] + bins[1] + bins[2]);
-                }catch (ArrayIndexOutOfBoundsException ex) {
+                } catch (ArrayIndexOutOfBoundsException ex) {
                     // we want to make sure out catch block doesn't actually quit the program. Null values (-1) are acceptable in our matrix because that signifies that the transcript doesn't contain that read!
-//                    Logger.getLogger(FootprintAlignmentSummary.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(FootprintAlignmentSummary.class.getName()).log(Level.SEVERE, null, ex);
                     System.out.println("Something is wrong with your logic. There should exist a read that corresponds to your read in question.");
                 } finally {
                     alignmentMatrix.get(readInQuestion).put(transcript, fractionAligned);
