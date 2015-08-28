@@ -19,7 +19,11 @@ import java.util.logging.Logger;
  */
 public class gtfParser {
     private final File gtfFile;
+<<<<<<< Updated upstream
    
+=======
+    private final HashMap<String, String> transcriptTypeMap = new HashMap<String, String>();
+>>>>>>> Stashed changes
     
     public gtfParser(File gtf) throws IOException {
         this.gtfFile = gtf;

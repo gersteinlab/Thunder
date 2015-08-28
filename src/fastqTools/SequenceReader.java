@@ -12,21 +12,21 @@ public class SequenceReader {
 		//SequenceReader reader = new SequenceReader("/Users/robk/WORK/YALE_offline/ANNOTATIONS/test.fa");
 		SequenceReader reader = new SequenceReader("/Users/robk/Downloads/test.fq");
 		//SequenceReader reader = new SequenceReader(System.in);
-		
+
 		SequenceRecord tmp;
 		while((tmp=reader.readNextRecord()) != null){
 			System.out.println(tmp.toString());
 		}
 
 	}
-	
-	
+
+
 	//
 	private String thisSequenceID = null;
 	private int nullCount = 0;
 	private BufferedReader buffer;
-	
-	
+
+
 
 	/**
 	 * 
@@ -34,15 +34,18 @@ public class SequenceReader {
 	 * @throws IOException
 	 */
 	public SequenceReader(String inputFilePath) throws IOException{
-		buffer = new BufferedReader(new FileReader(inputFilePath));
+		if(inputFilePath.trim().equals("-"))
+			buffer = new BufferedReader(new InputStreamReader(System.in));
+		else
+			buffer = new BufferedReader(new FileReader(inputFilePath));
 	}
-	
+
 	public SequenceReader(InputStream in) throws IOException{
 		buffer = new BufferedReader(new InputStreamReader(in));
 	}
-	
-	
-	
+
+
+
 	private boolean isFastq = true;
 	private int lineCount = 0;
 	/**
@@ -62,7 +65,7 @@ public class SequenceReader {
 				lineCount ++;
 			}else if(line.startsWith(">"))
 				isFastq = false;
-				
+
 			if(line.startsWith("@") || line.startsWith(">")){
 				thisSequenceID = line.substring(1).trim();
 			}
@@ -70,27 +73,36 @@ public class SequenceReader {
 
 		// Create a new object to hold the sequence about to be read
 		toReturn = new SequenceRecord(thisSequenceID);
-		
+
 		boolean readingQual = false;
-		
+
 		// Read lines until the next header
 		while((line=buffer.readLine()) != null){
 			lineCount ++;
 			//if(line.startsWith("@") || line.startsWith(">")){
-			if(isFastq  &&  lineCount == 5){
-				thisSequenceID = line.substring(1).trim();
-				lineCount = 1;
-				break;
-			}else if(line.startsWith("+")  &&  lineCount == 3){
-				readingQual = true;	
+			if(isFastq){
+				if(lineCount == 5){
+					thisSequenceID = line.substring(1).trim();
+					lineCount = 1;
+					break;
+				}else if(line.startsWith("+")  &&  lineCount == 3){
+					readingQual = true;	
+				}else{
+					if(!readingQual)
+						toReturn.addSequenceString(line.trim());
+					else
+						toReturn.addQualityString(line.trim());
+				}
 			}else{
-				if(!readingQual)
+				if(line.startsWith(">")){
+					thisSequenceID = line.substring(1).trim();
+					break;
+				}else{
 					toReturn.addSequenceString(line.trim());
-				else
-					toReturn.addQualityString(line.trim());
+				}
 			}
 		}
-		
+
 		// hack to output the final sequence, then output null for the N+1th sequence
 		if(line == null){
 			if(nullCount == 0){

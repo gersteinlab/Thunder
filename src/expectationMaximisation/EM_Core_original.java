@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class EM_Core {
+public class EM_Core_original {
 
 	private boolean _verbose = false;
 
@@ -24,7 +24,7 @@ public class EM_Core {
 
 
 
-	public EM_Core(EM_Gene gene){
+	public EM_Core_original(EM_Gene gene){
 		_gene = gene;
 		_transcriptIDs = _gene.getTranscriptIDs();
 		Collections.sort(_transcriptIDs);
