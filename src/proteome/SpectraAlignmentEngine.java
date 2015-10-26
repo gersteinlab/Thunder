@@ -84,7 +84,7 @@ public class SpectraAlignmentEngine {
 	 */
 	public void processAlignments(double fdrMax, File outputFile, boolean removeCRAPome) throws IOException{
 
-		// TODO: really only just FDR filtering at the moment- maybe include MS1 intenstites?
+		// TODO: really only just FDR filtering at the moment- maybe include MS1 intensities?
 		filterByReverseHits(fdrMax);
 		Thunder.printLineErr("  N valid spectra:\t"+alignments.size());
 
@@ -314,7 +314,7 @@ public class SpectraAlignmentEngine {
 			}
 		}
 
-		double maxExpect = 0.0;
+		double maxExpect = 1000000.0;
 		//System.out.println();
 		for(int i=0;i<(countLegit);i++){
 			//System.out.println(fdrMatrix[i][0]+" : "+fdrMatrix[i][1]);
@@ -323,6 +323,8 @@ public class SpectraAlignmentEngine {
 				break;
 			}
 		}
+		
+		//System.err.println("maxExpect = "+maxExpect);
 
 		return maxExpect;
 	}

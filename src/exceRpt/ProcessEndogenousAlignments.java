@@ -1,9 +1,7 @@
 package exceRpt;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,14 +36,14 @@ import sequenceTools.Sequence;
 class Insert{
 	private String _insertSequence;
 	private int _nInsertSequences;
-	private int _nUniqueBarcodes_5p, _nUniqueBarcodes_3p, _nUniqueBarcodes_5p3p;
-	private double _KLdivergence_5p, _KLdivergence_3p, _KLdivergence_5p3p;
+	//private int _nUniqueBarcodes_5p, _nUniqueBarcodes_3p, _nUniqueBarcodes_5p3p;
+	//private double _KLdivergence_5p, _KLdivergence_3p, _KLdivergence_5p3p;
 
 	Insert(String insertSequence, int nInsertSequences){
 		_insertSequence = insertSequence;
 		_nInsertSequences = nInsertSequences;
 	}
-	void addRandomBarcode5p(int nUniqueBarcodes_5p, double KLdivergence_5p){
+	/*void addRandomBarcode5p(int nUniqueBarcodes_5p, double KLdivergence_5p){
 		_nUniqueBarcodes_5p = nUniqueBarcodes_5p;
 		_KLdivergence_5p = KLdivergence_5p;
 		_has5p = true;
@@ -59,9 +57,48 @@ class Insert{
 		_nUniqueBarcodes_5p3p = nUniqueBarcodes_5p3p;
 		_KLdivergence_5p3p = KLdivergence_5p3p;
 		_has5p3p = true;
+	}*/
+
+	private HashMap <String, Integer> _barcodeCounts = new HashMap <String, Integer>(); 
+	void addRead(String readID){ 
+		_nInsertSequences++;
+
+		String barcode_5p="", barcode_3p="";//, barcode_5p3p="";
+		String barcode = "";
+		// Check for 5' barcode
+		String[] bits = readID.split("\\{5p");
+		if(bits.length == 2){
+			barcode_5p = bits[1].split("\\}")[0];
+			barcode = barcode_5p;
+			_has5p = true;
+		}
+		// Check for 3' barcode
+		bits = readID.split("\\{3p");
+		if(bits.length == 2){
+			barcode_3p = bits[1].split("\\}")[0];
+			barcode += barcode_3p;
+			_has3p = true;
+		}
+		// Check for 5' AND 3' barcodes
+		if(_has5p && _has3p){
+			_has5p3p = true;
+			//barcode_5p3p = barcode_5p+barcode_3p;
+		}
+
+		// add this random barcode to the list
+		if(_has5p || _has3p){
+			if(!_barcodeCounts.containsKey(barcode))
+				_barcodeCounts.put(barcode, 1);
+			else
+				_barcodeCounts.put(barcode, _barcodeCounts.get(barcode)+1);
+		}
+
 	}
 
-	void incrementNumberOfInserts(){ _nInsertSequences++; }
+	public int getNumberOfRandomBarcodes(){
+		return _barcodeCounts.size();
+	}
+
 
 	private boolean _has5p=false, _has3p=false, _has5p3p=false;
 	boolean hasRandomBarcode5p(){ return _has5p; }
@@ -76,17 +113,19 @@ class Insert{
 	//double getKL_5p(){ return _KLdivergence_5p; }
 	//double getKL_3p(){ return _KLdivergence_3p; }
 	//double getKL_5p3p(){ return _KLdivergence_5p3p; }
+
 	int getBarcodeCount(){
-		if(_has5p3p)
+		/*if(_has5p3p)
 			return _nUniqueBarcodes_5p3p;
 		else if(_has5p)
 			return _nUniqueBarcodes_5p;
 		else if(_has3p)
 			return _nUniqueBarcodes_3p;
 		else
-			return 0;
+			return 0;*/
+		return _barcodeCounts.size();
 	}
-	double getKL(){
+	/*double getKL(){
 		if(_has5p3p)
 			return _KLdivergence_5p3p;
 		else if(_has5p)
@@ -95,7 +134,7 @@ class Insert{
 			return _KLdivergence_3p;
 		else
 			return 0;
-	}
+	}*/
 
 	//
 	//
@@ -124,14 +163,93 @@ public class ProcessEndogenousAlignments {
 		_optimalAlignmentWriter = new BufferedWriter(new FileWriter(pathForOptimalAlignments+"/endogenousAlignments_Accepted.txt"));
 	}
 
-	public ProcessEndogenousAlignments(String pathForOptimalAlignments, String pathToRandomBarcodeStats) throws IOException{
-		_optimalAlignmentWriter = new BufferedWriter(new FileWriter(pathForOptimalAlignments+"/endogenousAlignments_Accepted.txt"));
-		readRandomBarcodeInfo(pathToRandomBarcodeStats);
-	}
+	//public ProcessEndogenousAlignments(String pathForOptimalAlignments, String pathToRandomBarcodeStats) throws IOException{
+	//	_optimalAlignmentWriter = new BufferedWriter(new FileWriter(pathForOptimalAlignments+"/endogenousAlignments_Accepted.txt"));
+	//	readRandomBarcodeInfo(pathToRandomBarcodeStats);
+	//}
 
-
+	private boolean _hasBarcodeStats = false;
 	private HashMap<String, Insert> _allInserts = new HashMap<String, Insert>(); 
-	private void readRandomBarcodeInfo(String path) throws IOException{
+
+	
+	
+
+	private ArrayList<String> _libraryPriority;
+	private final String _libraryPriorityOptions = "miRNA, tRNA, piRNA, gencode, circRNA";
+	private String _libraryPriorityString = "miRNA,tRNA,piRNA,gencode,circRNA";
+	
+	/**
+	 * Set the default library priority (miRNA,tRNA,piRNA,gencode,circRNA)
+	 */
+	private void setLibraryPriority(){
+		setLibraryPriority(_libraryPriorityString);
+	}
+	
+	/**
+	 * Specify a new library priority
+	 * @param priorityString new library string of the form miRNA,tRNA,piRNA,gencode,circRNA
+	 */
+	private void setLibraryPriority(String priorityString){
+		_libraryPriority = new ArrayList<String>();
+		_libraryPriorityString = "";
+		String[] bits = priorityString.split(",");
+		for(int i=0;i<bits.length;i++){
+			String lib = validateLibrary(bits[i].trim());
+			if(lib != null){
+				_libraryPriority.add(lib);
+				if(i > 0)
+					_libraryPriorityString += " > ";
+				_libraryPriorityString += lib;
+				
+			}else
+				Thunder.printLineErr("WARNING: Ignoring unrecognised library \'"+bits[i].trim()+"\'. Must be one of "+_libraryPriorityOptions);
+		}
+	}
+	
+	/**
+	 *  checks input library string against valid options (case insensitive)
+	 * @param lib library name to test
+	 * @return properly formatted library name, or null if no match found
+	 */
+	private String validateLibrary(String lib){
+		String validLibString = "";
+		
+		/* requires Java 1.7
+		switch(lib.toLowerCase()){
+		case "mirna": validLibString = "validLibString"; break;
+		case "trna": validLibString = "tRNA"; break;
+		case "pirna": validLibString = "piRNA"; break;
+		case "gencode": validLibString = "gencode"; break;
+		case "circrna": validLibString = "circRNA"; break;
+		default: validLibString = null;
+		}*/
+		
+		String libLower = lib.toLowerCase();
+		if(libLower.equalsIgnoreCase("miRNA"))
+			validLibString = "miRNA";
+		else if(libLower.equalsIgnoreCase("tRNA"))
+			validLibString = "tRNA";
+		else if(libLower.equalsIgnoreCase("piRNA"))
+			validLibString = "piRNA";
+		else if(libLower.equalsIgnoreCase("gencode"))
+			validLibString = "gencode";
+		else if(libLower.equalsIgnoreCase("circRNA"))
+			validLibString = "circRNA";
+		
+		return validLibString;
+	}
+	
+
+
+	/**
+	 * Read summary info from the random barcodes (if they are present)
+	 * 
+	 * @param path
+	 * @throws IOException
+	 */
+	/*private void readRandomBarcodeInfo(String path) throws IOException{
+		_hasBarcodeStats = true;
+
 		BufferedReader barcodeStatsReader = new BufferedReader(new FileReader(path));
 		String line;
 		String[] bits, header;
@@ -162,7 +280,7 @@ public class ProcessEndogenousAlignments {
 			_allInserts.put(bits[0], tmp);
 		}
 		barcodeStatsReader.close();
-	}
+	}*/
 
 
 	/*
@@ -207,14 +325,19 @@ public class ProcessEndogenousAlignments {
 			if(readNegativeStrand)
 				tmp.getKey().setReadString(Sequence.reverseComplement(tmp.getKey().getReadString()));
 
-			// add this read to the list of Insert sequences
+			// add this read to the list of Insert sequences (only if it is the first in the alignment list)
 			if(count == 0){
-				String readSeq = tmp.getKey().getReadString();
+				String insertSeq = tmp.getKey().getReadString();
+				String readID = tmp.getKey().getReadName();
 
-				if(!_allInserts.containsKey(readSeq))
-					_allInserts.put(readSeq, new Insert(readSeq, 1));
-				else
-					_allInserts.get(readSeq).incrementNumberOfInserts();
+				// Only add to the insert count if these have not already been counted by the random barcode summary!
+				if(!_hasBarcodeStats){
+					if(!_allInserts.containsKey(insertSeq))
+						_allInserts.put(insertSeq, new Insert(insertSeq, 0));
+
+					_allInserts.get(insertSeq).addRead(readID);
+				}
+
 				count++;
 			}
 
@@ -254,51 +377,37 @@ public class ProcessEndogenousAlignments {
 
 		/*
 		 * Logic block to prioritise alignments:
-		 * 
-		 * 1- prefer sense alignments over antisense alignments
-		 * 2- miRNA
-		 * 3- tRNA
-		 * 4- piRNA
-		 * 5- gencode
-		 * 6- circRNA
+		 * - prefer sense alignments over antisense alignments
 		 */
 		String keptLibrary = "none";
+		String thisLib = "";
+		// Try sense alignments
 		if(readHasSenseAlignment){
-			if(readsByLibrary.containsKey("miRNA_sense")){
-				keepAlignments = readsByLibrary.get("miRNA_sense");
-				keptLibrary = "miRNA_sense";
-			}else if(readsByLibrary.containsKey("tRNA_sense")){
-				keepAlignments = readsByLibrary.get("tRNA_sense");
-				keptLibrary = "tRNA_sense";
-			}else if(readsByLibrary.containsKey("piRNA_sense")){
-				keepAlignments = readsByLibrary.get("piRNA_sense");
-				keptLibrary = "piRNA_sense";
-			}else if(readsByLibrary.containsKey("gencode_sense")){
-				keepAlignments = readsByLibrary.get("gencode_sense");
-				keptLibrary = "gencode_sense";
-			}else if(readsByLibrary.containsKey("circRNA_sense")){
-				keepAlignments = readsByLibrary.get("circRNA_sense");
-				keptLibrary = "circRNA_sense";
+			Iterator<String> libraryIterator = _libraryPriority.iterator();
+			//System.out.print("SENSE: ");
+			while(libraryIterator.hasNext()){
+				thisLib = libraryIterator.next();
+				//System.out.print("\t"+thisLib);
+				if(readsByLibrary.containsKey(thisLib+"_sense")){
+					keepAlignments = readsByLibrary.get(thisLib+"_sense");
+					keptLibrary = thisLib+"_sense";
+					break;
+				}
 			}
-		}else{
-			if(readsByLibrary.containsKey("miRNA_antisense")){
-				keepAlignments = readsByLibrary.get("miRNA_antisense");
-				keptLibrary = "miRNA_antisense";
-			}else if(readsByLibrary.containsKey("tRNA_antisense")){
-				keepAlignments = readsByLibrary.get("tRNA_antisense");
-				keptLibrary = "tRNA_antisense";
-			}else if(readsByLibrary.containsKey("piRNA_antisense")){
-				keepAlignments = readsByLibrary.get("piRNA_antisense");
-				keptLibrary = "piRNA_antisense";
-			}else if(readsByLibrary.containsKey("gencode_antisense")){
-				keepAlignments = readsByLibrary.get("gencode_antisense");
-				keptLibrary = "gencode_antisense";
-			}else if(readsByLibrary.containsKey("circRNA_antisense")){
-				keepAlignments = readsByLibrary.get("circRNA_antisense");
-				keptLibrary = "circRNA_antisense";
+		}else{  // Try antisense alignments
+			Iterator<String> libraryIterator = _libraryPriority.iterator();
+			//System.out.print("ANTISENSE: ");
+			while(libraryIterator.hasNext()){
+				thisLib = libraryIterator.next();
+				//System.out.print("\t"+thisLib);
+				if(readsByLibrary.containsKey(thisLib+"_antisense")){
+					keepAlignments = readsByLibrary.get(thisLib+"_antisense");
+					keptLibrary = thisLib+"_antisense";
+					break;
+				}
 			}
 		}
-		//System.out.println("keptLibrary = "+keptLibrary);
+		//System.out.println();
 
 
 		/*
@@ -338,8 +447,8 @@ public class ProcessEndogenousAlignments {
 		 * 
 		 */
 		it2 = keepAlignments.iterator();
-		String lastLib = "";
-		int counter = 0;
+		//String lastLib = "";
+		//int counter = 0;
 		while(it2.hasNext()){
 
 			tmp2 = it2.next();
@@ -376,9 +485,15 @@ public class ProcessEndogenousAlignments {
 				}
 			}else{
 				//System.out.println(insertSequence+"\t"+keptLibrary+"\t"+mapsTo);
-				_allInserts.get(insertSequence).setMapsToLib(keptLibrary);
-				_allInserts.get(insertSequence).addReferenceAlignment(mapsTo);
-
+				try{
+					_allInserts.get(insertSequence).setMapsToLib(keptLibrary);
+					_allInserts.get(insertSequence).addReferenceAlignment(mapsTo);
+				}
+				catch(NullPointerException e){
+					//Thunder.printLineErr("ERROR: "+tmp2.getReadName()+"\t"+insertSequence+"\t"+keptLibrary+"\t"+mapsTo);
+					Thunder.printLineErr("ERROR: Ignoring alignment: "+tmp2.getReadName()+"\t"+keptLibrary+"\t"+mapsTo);
+					//e.printStackTrace();
+				}
 				//if(counter > 0  &&  !lastLib.equals(keptLibrary))
 				//	System.out.println(insertSequence+"\t"+lastLib+"\t"+keptLibrary);
 				//lastLib = keptLibrary;
@@ -656,12 +771,14 @@ public class ProcessEndogenousAlignments {
 		options.addOption(OptionBuilder.withArgName(".SAM or .BAM").hasArg().withDescription("Path to MATURE alignments to the hairpins").create("mature2hairpin"));
 		options.addOption(OptionBuilder.withArgName(".SAM or .BAM").hasArg().withDescription("Path to READ alignments to the hairpins").create("reads2all"));
 		options.addOption(OptionBuilder.withArgName(".stats").hasArg().withDescription("[optional] Path to random barcode stats").create("randombarcode"));
+		options.addOption(OptionBuilder.withArgName("csv list").hasArg().withDescription("[optional] Library priorities for quantification. Comma separated list of libraries in *descending* order of importance. Default: miRNA,tRNA,piRNA,gencode,circRNA - this can also be used to suppress libraries during quantification.").create("libPriority"));
 		options.addOption(OptionBuilder.withArgName("directory").hasArg().withDescription("Base path to write the results into").create("outputPath"));
 		return options;
 	}
 
+
 	public static void main(String[] args) throws ParseException, IOException {
-		String hairpin2genome = "/Users/robk/WORK/YALE_offline/ANNOTATIONS/MICRO_RNA/miRBase_v21_hairpin_hsa_hg19_aligned.sam";
+		/*String hairpin2genome = "/Users/robk/WORK/YALE_offline/ANNOTATIONS/MICRO_RNA/miRBase_v21_hairpin_hsa_hg19_aligned.sam";
 		String mature2hairpin = "/Users/robk/WORK/YALE_offline/ANNOTATIONS/MICRO_RNA/miRBase_v21_mature_hairpin_hsa_aligned.sam";
 		//String reads_path = "/Users/robk/WORK/YALE_offline/exRNA/TESTING/newEndogenousQuants/endogenousAlignments_ALL.sam";
 		String reads_path = "/Users/robk/WORK/YALE_offline/exRNA/TESTING/newEndogenousQuants/endogenousAlignments_LIBS.sam";
@@ -672,8 +789,9 @@ public class ProcessEndogenousAlignments {
 				"--hairpin2genome",hairpin2genome,
 				"--mature2hairpin",mature2hairpin,
 				"--reads2all",reads_path,
-				"--outputPath",output_path
-		};
+				"--outputPath",output_path,
+				"--libPriority","miRNA,tRNA,piRNA,gencode,circRNA"
+		};*/
 
 
 		CommandLine cmdArgs = Thunder.parseArgs(args, getCmdLineOptions());
@@ -683,8 +801,19 @@ public class ProcessEndogenousAlignments {
 			ProcessEndogenousAlignments engine = new ProcessEndogenousAlignments(cmdArgs.getOptionValue("outputPath"));
 
 			// Read barcode stats if they exist
-			if(cmdArgs.hasOption("randombarcode"))
-				engine.readRandomBarcodeInfo(cmdArgs.getOptionValue("randombarcode"));
+			//if(cmdArgs.hasOption("randombarcode")){
+			//	Thunder.printLineErr("Reading random barcode stats");
+			//	engine.readRandomBarcodeInfo(cmdArgs.getOptionValue("randombarcode"));
+			//}
+
+			// Check for library priority change
+			if(cmdArgs.hasOption("libPriority")){
+				engine.setLibraryPriority(cmdArgs.getOptionValue("libPriority"));
+				Thunder.printLineErr("Overriding default library priorities: "+engine._libraryPriorityString);
+			}else{
+				engine.setLibraryPriority();
+				Thunder.printLineErr("Using default library priorities: "+engine._libraryPriorityString);
+			}
 
 			// Read hairpin alignments to the genome and mature alignments to the hairpins
 			Thunder.printLineErr("Reading miRNA annotation info");
@@ -714,19 +843,9 @@ public class ProcessEndogenousAlignments {
 			formatter.printHelp(Thunder.THUNDER_EXE_COMMAND+" ProcessEndogenousAlignments", getCmdLineOptions());
 			System.err.println();
 		}
-
-
-
 	}
-
 }
 
-
-class OtherRNA{
-	public HashMap<String, Alignment> _reads = new HashMap<String, Alignment>();
-
-
-}
 
 
 class Hairpin{
