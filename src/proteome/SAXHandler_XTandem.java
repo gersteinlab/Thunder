@@ -1,6 +1,5 @@
 package proteome;
 
-import main.Thunder;
 import objects.Isoform;
 import objects.Peptide;
 import objects.Spectra;
@@ -8,6 +7,8 @@ import objects.Spectra;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import utils.IO_utils;
 
 /**
  * Defines how to deal with each line of XML from the X!Tandem output file
@@ -27,7 +28,7 @@ public class SAXHandler_XTandem extends DefaultHandler{
 		/*if(this.spectraCount % 100000 == 0){ System.err.println(this.spectraCount); }
 		else if(this.spectraCount % 10000 == 0){ System.err.print(this.spectraCount); }
 		else if(this.spectraCount % 1000 == 0){ System.err.print("."); }*/
-		if(this.spectraCount % 1000 == 0){ Thunder.printErr("Read "+this.spectraCount+" spectra\r"); }
+		if(this.spectraCount % 1000 == 0){ IO_utils.printErr("Read "+this.spectraCount+" spectra\r"); }
 	}
 	
 	SpectraAlignmentEngine spectraEngine;

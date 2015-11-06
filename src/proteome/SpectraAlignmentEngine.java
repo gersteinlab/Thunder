@@ -10,11 +10,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import main.Thunder;
 import objects.Alignment;
 import objects.Isoform;
 import objects.Peptide;
 import objects.Spectra;
+import utils.IO_utils;
 
 public class SpectraAlignmentEngine {
 
@@ -86,7 +86,7 @@ public class SpectraAlignmentEngine {
 
 		// TODO: really only just FDR filtering at the moment- maybe include MS1 intensities?
 		filterByReverseHits(fdrMax);
-		Thunder.printLineErr("  N valid spectra:\t"+alignments.size());
+		IO_utils.printLineErr("  N valid spectra:\t"+alignments.size());
 
 		if(removeCRAPome)
 			removeCRAPomeEntries("sp|", true);
@@ -128,7 +128,7 @@ public class SpectraAlignmentEngine {
 
 		if(verbose){
 			Iterator<String> it = crapomeIDs.iterator();
-			System.err.print(Thunder.getTime()+" Removed alignments to these CRAPome sequences: ");
+			System.err.print(IO_utils.getTime()+" Removed alignments to these CRAPome sequences: ");
 			while(it.hasNext())
 				System.err.print(it.next()+" ");
 			System.err.println();

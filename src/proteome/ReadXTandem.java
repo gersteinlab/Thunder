@@ -12,6 +12,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 
+import utils.IO_utils;
+
 public class ReadXTandem {
 
 	public static SpectraAlignmentEngine readTandemXML(File tandemResults, double fdrMax, boolean removeCRAPome) throws Exception{
@@ -33,8 +35,8 @@ public class ReadXTandem {
 		}
 		
 		System.err.println();
-		Thunder.printLineErr("  N spectra:\t"+spectraEngine.countSpectra());
-		Thunder.printLineErr("  N alignments:\t"+spectraEngine.getNumberOfAlignments());
+		IO_utils.printLineErr("  N spectra:\t"+spectraEngine.countSpectra());
+		IO_utils.printLineErr("  N alignments:\t"+spectraEngine.getNumberOfAlignments());
 		
 		//System.out.println("N peptides:\t"+spectraEngine.countPeptides());
 		//System.out.println("N proteins:\t"+spectraEngine.countProteins());

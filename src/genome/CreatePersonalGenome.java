@@ -259,7 +259,8 @@ public class CreatePersonalGenome {
 			new CreatePersonalGenome(cmdArgs.getOptionValue(Thunder.OPT_PATH_INPUT), cmdArgs.getOptionValue(Thunder.OPT_PATH_ANNOTATION), cmdArgs.getOptionValue(Thunder.OPT_PATH_DB_SAMPLE), cmdArgs.getOptionValue(Thunder.OPT_PATH_OUTPUT)); 
 		}else{
 			HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp(Thunder.THUNDER_EXE_COMMAND+" CreatePersonalGenome", getCmdLineOptions());
+			//formatter.printHelp(Thunder.THUNDER_EXE_COMMAND+" CreatePersonalGenome", getCmdLineOptions());
+			formatter.printHelp("CreatePersonalGenome", getCmdLineOptions());
 			System.out.println();
 		}
 

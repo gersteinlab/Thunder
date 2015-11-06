@@ -17,6 +17,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 
+import utils.IO_utils;
+
 public class MatchPairedEndSequences {
 	
 	private HashMap<String,FastX_Record> read1 = new HashMap<String,FastX_Record>();
@@ -43,7 +45,7 @@ public class MatchPairedEndSequences {
 		
 		int totalReads_r1 = 0, totalReads_r2 = 0, matchedReads = 0;
 		
-		Thunder.printLineOut("Reading mate1 reads.");
+		IO_utils.printLineOut("Reading mate1 reads.");
 		FastX fastx = new FastX(inputFile_read1);
 		FastX_Record thisRecord;
 		while((thisRecord = fastx.readNext()) != null){
@@ -61,7 +63,7 @@ public class MatchPairedEndSequences {
 		// Read second mates and output matches
 		String tmpID;
 		fastx = new FastX(inputFile_read2);
-		Thunder.printLineOut("Reading mate2 reads.");
+		IO_utils.printLineOut("Reading mate2 reads.");
 		while((thisRecord = fastx.readNext()) != null){
 			tmpID = thisRecord.getID().split(" ")[indexID];
 			totalReads_r2 ++;
@@ -82,7 +84,7 @@ public class MatchPairedEndSequences {
 		out1.close();
 		out2.close();
 		
-		Thunder.printLineOut("All done.  Matched "+matchedReads+" reads of "+totalReads_r1+" (R1) and "+totalReads_r2+" (R2)");
+		IO_utils.printLineOut("All done.  Matched "+matchedReads+" reads of "+totalReads_r1+" (R1) and "+totalReads_r2+" (R2)");
 	}
 
 

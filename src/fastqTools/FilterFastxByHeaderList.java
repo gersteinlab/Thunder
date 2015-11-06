@@ -14,6 +14,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 
+import utils.IO_utils;
+
 public class FilterFastxByHeaderList {
 
 	/**
@@ -39,7 +41,7 @@ public class FilterFastxByHeaderList {
 	 * @throws IOException
 	 */
 	public static ArrayList<String> readList(File listPath) throws IOException{
-		Thunder.printLineErr("Reading ID list");
+		IO_utils.printLineErr("Reading ID list");
 		ArrayList<String> idList = new ArrayList<String>();
 		BufferedReader in = new BufferedReader(new FileReader(listPath));
 		String line = "";
@@ -80,7 +82,7 @@ public class FilterFastxByHeaderList {
 				int countKept = 0;
 				int countExcluded = 0;
 				thisArg = it.next();
-				Thunder.printLineErr("Reading Fasta/q file:"+thisArg);
+				IO_utils.printLineErr("Reading Fasta/q file:"+thisArg);
 				//System.out.println(cmdArgs.getArgList().size());
 
 				SequenceReader reader = new SequenceReader(thisArg);
@@ -113,10 +115,10 @@ public class FilterFastxByHeaderList {
 						}
 					}
 				}
-				Thunder.printLineErr("\tReads kept: "+countKept);
-				Thunder.printLineErr("\tReads excluded: "+countExcluded);
+				IO_utils.printLineErr("\tReads kept: "+countKept);
+				IO_utils.printLineErr("\tReads excluded: "+countExcluded);
 			}
-			Thunder.printLineErr("Done.");
+			IO_utils.printLineErr("Done.");
 		}else{
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp(200, Thunder.THUNDER_EXE_COMMAND+" FilterFastxByHeaderList [options] <fasta/q File> [fasta/q File]", "", getCmdLineOptions(), "");

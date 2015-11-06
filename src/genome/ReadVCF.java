@@ -167,7 +167,8 @@ public class ReadVCF {
 			ReadVCF.ReadVCFToDB(cmdArgs.getOptionValue(Thunder.OPT_PATH_INPUT), cmdArgs.getOptionValue(Thunder.OPT_PATH_DB_SAMPLE), "SAMPLE", forceNewDB); 
 		}else{
 			HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp(Thunder.THUNDER_EXE_COMMAND+" ReadVCF", getCmdLineOptions());
+			//formatter.printHelp(Thunder.THUNDER_EXE_COMMAND+" ReadVCF", getCmdLineOptions());
+			formatter.printHelp("ReadVCF", getCmdLineOptions());
 			System.out.println();
 		}
 

@@ -1,8 +1,5 @@
 package main;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -16,10 +13,7 @@ import transcriptome.ExtractSequencesFromGTF;
 import transcriptome.ModifyHeadersInTophatTranscriptome;
 import annotation.ReadAnnotation;
 import database.ListDBTables;
-import exceRpt.FindAdapter;
-import exceRpt.ProcessEndogenousAlignments;
-import expectationMaximisation.FootprintEM;
-import expectationMaximisation.ProteomicEM;
+import fastqTools.FindAdapter;
 import fastaTools.FastaHeaderGrep;
 import fastqTools.FilterBySequenceLength;
 import fastqTools.FilterFastxByHeaderList;
@@ -32,7 +26,7 @@ import genome.ReadVCF;
 
 public class Thunder {
 
-	public static final String VERSION = "0.5.5";
+	public static final String VERSION = "0.5.7";
 	
 	public static final String OPT_PATH_DB_ANNOTATION = "A";
 	public static final String OPT_PATH_DB_SAMPLE = "S";
@@ -100,20 +94,20 @@ public class Thunder {
 			ReadmzXML.main(args);
 		}else if(main.equals("parsetandemoutput")){
 			ReadXTandem.main(args);
-		}else if(main.equals("isoformem_footprints")){
+		/*}else if(main.equals("isoformem_footprints")){
 			//RibosomeFootprintEM.main(args);
 			FootprintEM.main(args);
 		}else if(main.equals("isoformem_proteomics")){
 			//RibosomeFootprintEM.main(args);
 			ProteomicEM.main(args);
-		}else if(main.equals("cigar_2_pwm")){
+		*/}else if(main.equals("cigar_2_pwm")){
 			CIGAR_2_PWM.main(args);
 		}else if(main.equals("matchpairedendsequences")){
 			MatchPairedEndSequences.main(args);
 		}else if(main.equals("fastaheadergrep")){
 			FastaHeaderGrep.main(args);
-		}else if(main.equals("processendogenousalignments")){
-			ProcessEndogenousAlignments.main(args);
+		//}else if(main.equals("processendogenousalignments")){
+		//	ProcessEndogenousAlignments.main(args);
 		}else if(main.equals("filterfastxbyidlist")){
 			FilterFastxByHeaderList.main(args);
 		}else if(main.equals("processfastqwithrandombarcode")){
@@ -128,6 +122,7 @@ public class Thunder {
 			System.out.println("");
 			
 			System.out.println("Usage:\t "+Thunder.THUNDER_EXE_COMMAND+" <Command>");
+			//System.out.println("Usage:\t java -Xmx2G -jar Thunder.jar <Command>");
 			System.out.println("");
 
 			System.out.println("Command: GetSequenceLengths            | Get the distribution of sequence lengths in a FASTA/Q file");
@@ -147,10 +142,10 @@ public class Thunder {
 			//System.out.println("         ReadMzXML                  | import MS- and MS/MS-spectra to the database");
 			//System.out.println("         ReadTandem_toDB            | import X!Tandem MS/MS-spectra IDs to the database");
 			System.out.println("         ParseTandemOutput             | Process X!Tandem MS/MS-spectra alignments and output summary table");
-			System.out.println("         IsoformEM_Footprints          | Infer most likely transcripts from ribosome footprint alignments");
-			System.out.println("         IsoformEM_Proteomics          | Infer most likely isoforms from MS/MS spectra mapping");
+			//System.out.println("         IsoformEM_Footprints          | Infer most likely transcripts from ribosome footprint alignments");
+			//System.out.println("         IsoformEM_Proteomics          | Infer most likely isoforms from MS/MS spectra mapping");
 			System.out.println("         CIGAR_2_PWM                   | Reads SAM alignments and converts the CIGAR strings to a position-weight matrix");
-			System.out.println("         ProcessEndogenousAlignments   | Process endogenous smallRNA alignments for the exceRpt pipeline");
+			//System.out.println("         ProcessEndogenousAlignments   | Process endogenous smallRNA alignments for the exceRpt pipeline");
 			System.out.println();
 		}
 
@@ -160,28 +155,5 @@ public class Thunder {
 	public static final String THUNDER_EXE_COMMAND = "java -Xmx2G -jar Thunder.jar";
 
 	
-	public static String getTime(){
-		return((new SimpleDateFormat("yyyy/MM/dd HH:mm:ss")).format(Calendar.getInstance().getTime()));
-	}
-	
-	public static void printOut(String message){ System.out.print(getTime()+" "+message); }
-	public static void printErr(String message){ System.err.print(getTime()+" "+message); }
-	public static void printLineOut(String message){ System.out.println(getTime()+" "+message); }
-	public static void printLineErr(String message){ System.err.println(getTime()+" "+message); }
-	
-	public static void printProgressBar(int percent){
-	    StringBuilder bar = new StringBuilder("[");
-	    for(int i = 0; i < 50; i++){
-	        if( i < (percent/2)){
-	            bar.append("=");
-	        }else if( i == (percent/2)){
-	            bar.append(">");
-	        }else{
-	            bar.append(" ");
-	        }
-	    }
-	    bar.append("]   " + percent + "%     ");
-	    printErr(bar.toString()+"\r");
-	}
 	
 }

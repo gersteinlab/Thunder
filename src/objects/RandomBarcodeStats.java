@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
-import main.Thunder;
+import utils.IO_utils;
 
 
 public class RandomBarcodeStats {
@@ -42,7 +42,8 @@ public class RandomBarcodeStats {
 		_nBarcodeBases = barcodeLength;
 		_look5p = is5p;
 		_look3p = is3p;
-		_nBarcodeBases = barcodeLength;
+		//_nBarcodeBases = barcodeLength;
+		_totalBarcodeBases = barcodeLength;
 		if(_look5p  &&  _look3p)
 			_totalBarcodeBases = 2*barcodeLength;
 	}
@@ -241,7 +242,7 @@ public class RandomBarcodeStats {
 	public void processBarcodeStatistics(String outputPath) throws IOException{
 
 		// compute global barcode frequencies to adjust the KL divergence computation
-		Thunder.printLineErr("Computing global barcode probabilities");
+		IO_utils.printLineErr("Computing global barcode probabilities");
 		computeGlobalBarcodeProbabilities();
 		writeGlobalAdapterStats(outputPath);
 		computeBarcodeLigationLocalSequenceContext(outputPath, 2);
@@ -284,15 +285,15 @@ public class RandomBarcodeStats {
 			// write the number of times each barcode was observed, broken down by barcode position
 			if(_look5p){
 				out.write("\t" + _readsAndBarcodes_5p.get(thisReadSeq).size());
-				out.write("\t" + processBarcodeStatsForInsert(thisReadSeq, _readsAndBarcodes_5p.get(thisReadSeq), totalCount, 4, BARCODE_POSITION_5P, printPWM));
+				out.write("\t" + processBarcodeStatsForInsert(thisReadSeq, _readsAndBarcodes_5p.get(thisReadSeq), totalCount, _nBarcodeBases, BARCODE_POSITION_5P, printPWM));
 				//out.write("\t" + processBarcodeStatsForInsert(thisReadSeq, _readsAndBarcodes_5p.get(thisReadSeq), totalCount, 4, printPWM));
 			}if(_look3p){
 				out.write("\t" + _readsAndBarcodes_3p.get(thisReadSeq).size());
-				out.write("\t" + processBarcodeStatsForInsert(thisReadSeq, _readsAndBarcodes_3p.get(thisReadSeq), totalCount, 4, BARCODE_POSITION_3P, printPWM));
+				out.write("\t" + processBarcodeStatsForInsert(thisReadSeq, _readsAndBarcodes_3p.get(thisReadSeq), totalCount, _nBarcodeBases, BARCODE_POSITION_3P, printPWM));
 			}
 			if(_look5p  &&  _look3p){
 				out.write("\t" + _readsAndBarcodes.get(thisReadSeq).size());
-				out.write("\t" + processBarcodeStatsForInsert(thisReadSeq, _readsAndBarcodes.get(thisReadSeq), totalCount, 8, BARCODE_POSITION_5P3P, true));
+				out.write("\t" + processBarcodeStatsForInsert(thisReadSeq, _readsAndBarcodes.get(thisReadSeq), totalCount, 2*_nBarcodeBases, BARCODE_POSITION_5P3P, true));
 			}
 			out.write("\n");
 
@@ -334,7 +335,7 @@ public class RandomBarcodeStats {
 
 		//KolmogorovSmirnovTest ks = new KolmogorovSmirnovTest();
 		//ChiSquareTest chisq = new ChiSquareTest();
-		long[] observedCounts = new long[(int)Math.pow(4, barcodeBases)];
+		//long[] observedCounts = new long[(int)Math.pow(4, barcodeBases)];
 		double[] expectedCounts = new double[(int)Math.pow(4, barcodeBases)];
 		double expectedFrac = 1.0/Math.pow(4, barcodeBases);
 		for(int i=0;i<expectedCounts.length;i++){ expectedCounts[i] = expectedFrac; }
@@ -373,7 +374,7 @@ public class RandomBarcodeStats {
 			entropy -= calculateKL(barcodeProb, thisBarcodeCount, barcodeBases, theseBarcodes.size());
 
 			// add the observed count for this barcode
-			observedCounts[count] = thisBarcodeCount;
+			//observedCounts[count] = thisBarcodeCount;
 
 			// format barcode and count for printing
 			if(count < 3)

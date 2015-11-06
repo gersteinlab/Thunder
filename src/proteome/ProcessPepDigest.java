@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import main.Thunder;
 import objects.FastX;
 import objects.FastX_Record;
+import utils.IO_utils;
 
 public class ProcessPepDigest {
 
@@ -162,14 +162,14 @@ public class ProcessPepDigest {
 	public static final String ENZYME_LYSC = "LysC";
 
 	public static void main(String[] args) throws IOException{
-		System.out.println(Thunder.getTime()+" start");
+		System.out.println(IO_utils.getTime()+" start");
 		//String fastaPath = "/Users/robk/Downloads/test.protein.fa";
 		String fastaPath = "/Users/robk/WORK/YALE_offline/ANNOTATIONS/gencode.v21.annotation.protein.fa";
 		ArrayList<String> enzymes = new ArrayList<String>();
 		enzymes.add(ENZYME_TRYPSIN);
 		enzymes.add(ENZYME_LYSC);
 		digestProteinsFromFasta(new File(fastaPath), enzymes);
-		System.out.println(Thunder.getTime()+" finished");
+		System.out.println(IO_utils.getTime()+" finished");
 		
 		//HashMap<String, HashMap<Integer,Integer>> isoformPeptideCounts = ProcessPepDigest.processEMBOSSoutput(new File("/Users/robk/Desktop/EM_TEST/ProteoData/gencode.v18.annotation.protein.digest.head"));
 		//HashMap<String, HashMap<Integer,Integer>> isoformPeptideCounts = ProcessPepDigest.processEMBOSSoutput(new File("/Users/robk/Desktop/EM_TEST/ProteoData/gencode.v18.annotation.protein.digest"));

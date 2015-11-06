@@ -107,7 +107,8 @@ public class RemoveHomopolymers {
 			
 		}else{
 			HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp(Thunder.THUNDER_EXE_COMMAND+" RemoveHomopolymerRepeats", getCmdLineOptions());
+			//formatter.printHelp(Thunder.THUNDER_EXE_COMMAND+" RemoveHomopolymerRepeats", getCmdLineOptions());
+			formatter.printHelp("RemoveHomopolymerRepeats", getCmdLineOptions());
 			System.out.println();
 		}
 

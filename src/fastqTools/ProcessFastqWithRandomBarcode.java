@@ -12,6 +12,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 
+import utils.IO_utils;
+
 public class ProcessFastqWithRandomBarcode {
 
 	private SequenceReader _reader;
@@ -54,7 +56,7 @@ public class ProcessFastqWithRandomBarcode {
 	 * @throws IOException
 	 */
 	public void processFastqFile() throws IOException{
-		Thunder.printLineErr("Removing "+_nBarcodeBases+"N random barcodes "+_barcodesLocatedAt+" to insert");
+		IO_utils.printLineErr("Removing "+_nBarcodeBases+"N random barcodes "+_barcodesLocatedAt+" to insert");
 		SequenceRecord tmpIn, tmpOut;
 		while((tmpIn= _reader.readNextRecord()) != null){
 			tmpOut = processRead(tmpIn);
@@ -62,9 +64,9 @@ public class ProcessFastqWithRandomBarcode {
 				System.out.println(tmpOut.toString());
 		}
 		System.err.println();
-		Thunder.printLineErr("\tInput "+_nReads_in+" reads");
-		Thunder.printLineErr("\tRemoved "+_nReads_suppressed+" barcode/adapter dimers");
-		Thunder.printLineErr("\tOutput "+_nReads_out+" reads"); 
+		IO_utils.printLineErr("\tInput "+_nReads_in+" reads");
+		IO_utils.printLineErr("\tRemoved "+_nReads_suppressed+" barcode/adapter dimers");
+		IO_utils.printLineErr("\tOutput "+_nReads_out+" reads"); 
 	}
 
 	
@@ -74,16 +76,16 @@ public class ProcessFastqWithRandomBarcode {
 	 * @throws IOException
 	 */
 	public void processFastqFile(BufferedWriter bw) throws IOException{
-		Thunder.printLineErr("Removing "+_nBarcodeBases+"N random barcodes "+_barcodesLocatedAt+" to insert");
+		IO_utils.printLineErr("Removing "+_nBarcodeBases+"N random barcodes "+_barcodesLocatedAt+" to insert");
 		SequenceRecord tmpIn, tmpOut;
 		while((tmpIn= _reader.readNextRecord()) != null){
 			tmpOut = processRead(tmpIn);
 			if(tmpOut != null)
 				bw.write(tmpOut.toString()+"\n");
 		}
-		Thunder.printLineErr("\n\tInput "+_nReads_in+" reads");
-		Thunder.printLineErr("\tRemoved "+_nReads_suppressed+" barcode/adapter dimers");
-		Thunder.printLineErr("\tOutput "+_nReads_out+" reads");
+		IO_utils.printLineErr("\n\tInput "+_nReads_in+" reads");
+		IO_utils.printLineErr("\tRemoved "+_nReads_suppressed+" barcode/adapter dimers");
+		IO_utils.printLineErr("\tOutput "+_nReads_out+" reads");
 	}
 
 	
@@ -102,7 +104,7 @@ public class ProcessFastqWithRandomBarcode {
 		
 		int n = 100000;
 		if(_nReads_in % n == 0){
-			System.err.print("\r"+Thunder.getTime()+" Processed "+_nReads_in+" reads ("+Math.round(n/((System.currentTimeMillis()/1000.0)-_tmpSecs))+" reads/sec)     ");
+			System.err.print("\r"+IO_utils.getTime()+" Processed "+_nReads_in+" reads ("+Math.round(n/((System.currentTimeMillis()/1000.0)-_tmpSecs))+" reads/sec)     ");
 			_tmpSecs = System.currentTimeMillis()/1000.0;
 		}
 
@@ -146,7 +148,7 @@ public class ProcessFastqWithRandomBarcode {
 
 	
 	public void processBarcodeStatistics(String outputPath) throws IOException{
-		Thunder.printLineErr("Processing barcode statistics");
+		IO_utils.printLineErr("Processing barcode statistics");
 		_stats.processBarcodeStatistics(outputPath);
 		//_stats.writeGlobalAdapterStats(outputPath+".global");
 	}
@@ -221,7 +223,7 @@ public class ProcessFastqWithRandomBarcode {
 				engine.processBarcodeStatistics(cmdArgs.getOptionValue("stats"));
 			}
 			
-			Thunder.printLineErr("All done");
+			IO_utils.printLineErr("All done");
 		}else{
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp(200, Thunder.THUNDER_EXE_COMMAND+" ProcessFastqWithRandomBarcode [options] <sequenceFile (or '-' for stdin)>", "", getCmdLineOptions(), "");
