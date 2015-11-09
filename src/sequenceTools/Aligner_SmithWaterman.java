@@ -23,17 +23,17 @@ public class Aligner_SmithWaterman {
 	/**
 	 * The first input string
 	 */
-	private String str1;
+	private String _query_sequence;
 
 	/**
 	 * The second input String
 	 */
-	private String str2;
+	private String _reference_sequence;
 
 	/**
 	 * The lengths of the input strings
 	 */
-	private int length1, length2;
+	private int _query_length, _reference_length;
 
 	/**
 	 * The score matrix.
@@ -56,7 +56,7 @@ public class Aligner_SmithWaterman {
 	//static final int MISMATCH_SCORE = -8;
 	//static final int INDEL_SCORE = -9;
 	static final int MATCH_SCORE = 1;
-	static final int MISMATCH_SCORE = -1;
+	static final int MISMATCH_SCORE = -10;
 	static final int INDEL_SCORE = -10;
 
 	/**
@@ -78,16 +78,16 @@ public class Aligner_SmithWaterman {
 	private int[][] prevCells;
 
 	
-	public Aligner_SmithWaterman(String str1, String str2) {
-		this.str1 = reverse(str1); 
-		this.str2 = reverse(str2);
+	public Aligner_SmithWaterman(String query_sequence, String reference_sequence) {
+		_query_sequence = reverse(query_sequence); 
+		_reference_sequence = reverse(reference_sequence);
 		//this.str1 = str1;
 		//this.str2 = str2;
-		length1 = str1.length();
-		length2 = str2.length();
+		_query_length = query_sequence.length();
+		_reference_length = reference_sequence.length();
 
-		score = new double[length1+1][length2+1];
-		prevCells = new int[length1+1][length2+1];
+		score = new double[_query_length+1][_reference_length+1];
+		prevCells = new int[_query_length+1][_reference_length+1];
 
 		buildMatrix();
 	}
@@ -114,7 +114,7 @@ public class Aligner_SmithWaterman {
 			return INDEL_SCORE;
 		}
 
-		return (str1.charAt(i - 1) == str2.charAt(j  - 1)) ? MATCH_SCORE : MISMATCH_SCORE;
+		return (_query_sequence.charAt(i - 1) == _reference_sequence.charAt(j  - 1)) ? MATCH_SCORE : MISMATCH_SCORE;
 		//return Blosum.getDistance(str1.charAt(i-1), str2.charAt(j-1)); 
 	}
 
@@ -142,20 +142,20 @@ public class Aligner_SmithWaterman {
 		prevCells[0][0] = DR_ZERO; // starting point
 
 		// the first row
-		for (i = 1; i <= length1; i++) {
+		for (i = 1; i <= _query_length; i++) {
 			score[i][0] = 0;
 			prevCells[i][0] = DR_ZERO;
 		}
 
 		// the first column
-		for (j = 1; j <= length2; j++) {
+		for (j = 1; j <= _reference_length; j++) {
 			score[0][j] = 0;
 			prevCells[0][j] = DR_ZERO;
 		}
 
 		// the rest of the matrix
-		for (i = 1; i <= length1; i++) {
-			for (j = 1; j <= length2; j++) {
+		for (i = 1; i <= _query_length; i++) {
+			for (j = 1; j <= _reference_length; j++) {
 				double diagScore = score[i - 1][j - 1] + similarity(i, j);
 				double upScore = score[i][j - 1] + similarity(0, j);
 				double leftScore = score[i - 1][j] + similarity(i, 0);
@@ -190,8 +190,8 @@ public class Aligner_SmithWaterman {
 		double maxScore = 0;
 
 		// skip the first row and column
-		for (int i = 1; i <= length1; i++) {
-			for (int j = 1; j <= length2; j++) {
+		for (int i = 1; i <= _query_length; i++) {
+			for (int j = 1; j <= _reference_length; j++) {
 				if (score[i][j] > maxScore) {
 					maxScore = score[i][j];
 				}
@@ -209,6 +209,7 @@ public class Aligner_SmithWaterman {
 	}
 
 	private int basesMatched = 0;
+	private int basesMismatched = 0;
 
 	/**
 	 * Output the local alignments ending in the (i, j) cell.
@@ -233,13 +234,15 @@ public class Aligner_SmithWaterman {
 
 		// find out which directions to backtrack
 		if ((prevCells[i][j] & DR_LEFT) > 0) {
-			printAlignments(i-1, j, str1.charAt(i-1) + aligned1, "_" + aligned2, print);
+			printAlignments(i-1, j, _query_sequence.charAt(i-1) + aligned1, "_" + aligned2, print);
+			basesMismatched ++;
 		}
 		if ((prevCells[i][j] & DR_UP) > 0) {
-			printAlignments(i, j-1, "_" + aligned1, str2.charAt(j-1) + aligned2, print);
+			printAlignments(i, j-1, "_" + aligned1, _reference_sequence.charAt(j-1) + aligned2, print);
+			basesMismatched ++;
 		}
 		if ((prevCells[i][j] & DR_DIAG) > 0) {
-			printAlignments(i-1, j-1, str1.charAt(i-1) + aligned1, str2.charAt(j-1) + aligned2, print);
+			printAlignments(i-1, j-1, _query_sequence.charAt(i-1) + aligned1, _reference_sequence.charAt(j-1) + aligned2, print);
 			basesMatched += 1;
 		}
 	}
@@ -277,7 +280,7 @@ public class Aligner_SmithWaterman {
 	public int getAlignmentStart_query(){ return alignmentStart_query; }
 	public int getAlignmentStart_reference(){ return alignmentStart_reference; }
 	public int getNumberOfMatches(){ return basesMatched; }
-
+	public int getNumberOfMismatches(){ return basesMismatched; }
 
 	/**
 	 * Find the local alignments with the maximum score.
@@ -285,13 +288,13 @@ public class Aligner_SmithWaterman {
 	public void findBestAlignments(boolean print){
 		double maxScore = getMaxScore();
 		// skip the first row and column
-		for (int i = 1; i <= length1; i++) {
-			for (int j = 1; j <= length2; j++) {
+		for (int i = 1; i <= _query_length; i++) {
+			for (int j = 1; j <= _reference_length; j++) {
 				if (score[i][j] == maxScore) {
 					//System.out.println("i="+i+"  j="+j);
-					//System.out.println("length1-i="+(length1-i)+"  length2-j="+(length2-j));
-					alignmentStart_query = length1-i+1;
-					alignmentStart_reference = length2-j+1;
+					//System.out.println("_query_length-i+1="+(_query_length-i+1)+"  _reference_length-j+1="+(_reference_length-j+1));
+					alignmentStart_query = _query_length-i+1;
+					alignmentStart_reference = _reference_length-j+1;
 					printAlignments(i, j, "", "", print);
 				}
 			}
@@ -305,16 +308,16 @@ public class Aligner_SmithWaterman {
 	public void printDPMatrix()
 	{
 		System.out.print("   ");
-		for (int j=1; j<=length2;j++)
-			System.out.print ("   "+str2.charAt(j-1));
+		for (int j=1; j<=_reference_length;j++)
+			System.out.print ("   "+_reference_sequence.charAt(j-1));
 		System.out.println();
-		for (int i=0; i<=length1; i++)
+		for (int i=0; i<=_query_length; i++)
 		{
 			if (i>0)
-				System.out.print(str1.charAt(i-1)+" ");
+				System.out.print(_query_sequence.charAt(i-1)+" ");
 			else 
 				System.out.print("  ");
-			for (int j=0; j<=length2; j++)
+			for (int j=0; j<=_reference_length; j++)
 			{
 				System.out.print(score[i][j]/NORM_FACTOR+" ");
 			}
@@ -332,12 +335,12 @@ public class Aligner_SmithWaterman {
 		ArrayList<Match> matchList = new ArrayList<Match>();
 		int fA=0, fB=0;
 		//	skip the first row and column, find the next maxScore after prevmaxScore 
-		for (int i = 1; i <= length1; i++) {
-			for (int j = 1; j <= length2; j++) {
+		for (int i = 1; i <= _query_length; i++) {
+			for (int j = 1; j <= _reference_length; j++) {
 				if (score[i][j] > scoreThreshold && score[i][j]>score[i-1][j-1]
 						&& score[i][j]>score[i-1][j] && score[i][j]>score[i][j-1])
 				{
-					if (i==length1 || j==length2 ||  score[i][j]>score[i+1][j+1])
+					if (i==_query_length || j==_reference_length ||  score[i][j]>score[i+1][j+1])
 					{
 						// should be lesser than prev maxScore					    	
 						fA = i; 
@@ -352,15 +355,41 @@ public class Aligner_SmithWaterman {
 	}
 
 	
+	public double getMatchFractionOfOverlap(){
+		String readSeq = reverse(_query_sequence);
+		//for(int i=0;i<getAlignmentStart_query()-getAlignmentStart_reference();i++){ System.out.print(" "); }
+		//System.out.println(reverse(_reference_sequence));
+		
+		int lengthNoOverlap = getAlignmentStart_query()-getAlignmentStart_reference();
+		int lengthOverlap = readSeq.length()-lengthNoOverlap;
+		
+		if(readSeq.length() - (getAlignmentStart_query()-getAlignmentStart_reference()) > _reference_sequence.length()){
+			lengthOverlap = _reference_sequence.length();
+		}
+		
+		//System.out.println("lengthNoOverlap="+lengthNoOverlap+" lengthOverlap="+lengthOverlap+" getNumberOfMatches()/lengthOverlap="+((getNumberOfMatches()+0.0)/(lengthOverlap+0.0)));
+		
+		return((getNumberOfMatches()+0.0)/(lengthOverlap+0.0));
+	}
+	
 	public void printAlignmentInfo(){
 		System.out.println("The maximum alignment score is: " +getAlignmentScore());
-		System.out.println("read.length() = "+str1.length());
-		System.out.println("adapter1.length() = "+str2.length());
-		System.out.println("N matched bases = "+getNumberOfMatches() +" -- "+(getNumberOfMatches()/(str1.length()+str2.length()-getNumberOfMatches()+0.0)));
+		System.out.println("The maximum alignment score is: " +getMatchFractionOfOverlap());
+		
+		System.out.println("read.length() = "+_query_sequence.length());
+		System.out.println("adapter1.length() = "+_reference_sequence.length());
+		System.out.println("N matched bases = "+getNumberOfMatches() +" -- "+(getNumberOfMatches()/(_query_sequence.length()+_reference_sequence.length()-getNumberOfMatches()+0.0)));
+		System.out.println("N matched bases = "+getNumberOfMatches() +" -- "+(getNumberOfMatches()/(_reference_sequence.length()+0.0)));
+		System.out.println("N mismatched bases = "+getNumberOfMismatches() +" -- "+(getNumberOfMismatches()/(_reference_sequence.length()+0.0)));
 		System.out.println("Alignment start on query: "+getAlignmentStart_query());
-		System.out.println("read:\n"+reverse(str1));
+		System.out.println("Alignment start on reference: "+getAlignmentStart_reference());
+		System.out.println("getAlignmentStart_query()-getAlignmentStart_reference() = "+(getAlignmentStart_query()-getAlignmentStart_reference()));
+		
+		getMatchFractionOfOverlap();
+		
+		System.out.println("read:\n"+reverse(_query_sequence));
 		for(int i=0;i<getAlignmentStart_query()-getAlignmentStart_reference();i++){ System.out.print(" "); }
-		System.out.println(reverse(str2));
+		System.out.println(reverse(_reference_sequence));
 	}
 	
 	public static void main(String[] args) throws IOException{
@@ -374,10 +403,13 @@ public class Aligner_SmithWaterman {
 
 		String adapter3 = "TTTTGGGTGCCAAGGAACTCCAGTCACCGATGTAAAAAA";
 
+		String adapter4 = "TAGTGGGTTA"; //50 long
+		
 		Aligner_SmithWaterman sw1 = new Aligner_SmithWaterman(read, adapter1);
 		Aligner_SmithWaterman sw2 = new Aligner_SmithWaterman(read, adapter2);
 		Aligner_SmithWaterman sw3 = new Aligner_SmithWaterman(read, adapter3);
-
+		Aligner_SmithWaterman sw4 = new Aligner_SmithWaterman(read, adapter4);
+		
 		boolean printBestAlignmentString = true;
 
 		sw1.findBestAlignments(printBestAlignmentString);
@@ -396,7 +428,12 @@ public class Aligner_SmithWaterman {
 		sw3.printAlignmentInfo();
 		//sw3.printDPMatrix();
 		
-		
+		System.out.println("\n\n");
+
+		sw4.findBestAlignments(printBestAlignmentString);
+		sw4.printAlignmentInfo();
+		//sw3.printDPMatrix();
+
 		
 	}
 }
