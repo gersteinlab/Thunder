@@ -77,7 +77,7 @@ public class Aligner_SmithWaterman {
 	 */
 	private int[][] prevCells;
 
-	
+
 	public Aligner_SmithWaterman(String query_sequence, String reference_sequence) {
 		_query_sequence = reverse(query_sequence); 
 		_reference_sequence = reverse(reference_sequence);
@@ -98,8 +98,8 @@ public class Aligner_SmithWaterman {
 	 * @return
 	 */
 	public static String reverse(String in){ return new StringBuilder(in).reverse().toString(); }; 
-	
-	
+
+
 	/**
 	 * Compute the similarity score of substitution: use a substitution matrix if the cost model
 	 * The position of the first character is 1.
@@ -354,44 +354,66 @@ public class Aligner_SmithWaterman {
 		return matchList; // could be empty if no HSP scores are > scoreThreshold
 	}
 
-	
+
 	public double getMatchFractionOfOverlap(){
 		String readSeq = reverse(_query_sequence);
 		//for(int i=0;i<getAlignmentStart_query()-getAlignmentStart_reference();i++){ System.out.print(" "); }
 		//System.out.println(reverse(_reference_sequence));
-		
+
 		int lengthNoOverlap = getAlignmentStart_query()-getAlignmentStart_reference();
 		int lengthOverlap = readSeq.length()-lengthNoOverlap;
-		
+
 		if(readSeq.length() - (getAlignmentStart_query()-getAlignmentStart_reference()) > _reference_sequence.length()){
 			lengthOverlap = _reference_sequence.length();
 		}
-		
+
 		//System.out.println("lengthNoOverlap="+lengthNoOverlap+" lengthOverlap="+lengthOverlap+" getNumberOfMatches()/lengthOverlap="+((getNumberOfMatches()+0.0)/(lengthOverlap+0.0)));
-		
+
 		return((getNumberOfMatches()+0.0)/(lengthOverlap+0.0));
 	}
-	
-	public void printAlignmentInfo(){
-		System.out.println("The maximum alignment score is: " +getAlignmentScore());
-		System.out.println("The maximum alignment score is: " +getMatchFractionOfOverlap());
+
+
+	public double getWeightedScore(){
+		return (getNumberOfMatches()+0.0)*Math.pow(getMatchFractionOfOverlap(), 2);
+	}
+
+	public String getAlignmentInfo(){
+		String out = "";
 		
-		System.out.println("read.length() = "+_query_sequence.length());
-		System.out.println("adapter1.length() = "+_reference_sequence.length());
-		System.out.println("N matched bases = "+getNumberOfMatches() +" -- "+(getNumberOfMatches()/(_query_sequence.length()+_reference_sequence.length()-getNumberOfMatches()+0.0)));
+		//System.out.println("Alignment start on query: "+getAlignmentStart_query());
+		//System.out.println("Alignment start on reference: "+getAlignmentStart_reference());
+
+		if(getAlignmentStart_query() >= getAlignmentStart_reference()){
+			out = reverse(_query_sequence)+"\n";
+			for(int i=0;i<getAlignmentStart_query()-getAlignmentStart_reference();i++){ out+=" "; }
+			out += reverse(_reference_sequence);
+		}else{
+			for(int i=0;i<getAlignmentStart_reference()-getAlignmentStart_query();i++){ out+=" "; }
+			out += reverse(_query_sequence)+"\n";
+			out += reverse(_reference_sequence);
+		}
+
+		out += "\tnMatch:" +getNumberOfMatches();
+		out += "\tfracMatch:" +getMatchFractionOfOverlap();
+		out += "\tscore:" +getAlignmentScore();
+		out += "\tweightedScore:" +getWeightedScore();
+
+
+
+		//System.out.println("read.length() = "+_query_sequence.length());
+		//System.out.println("adapter1.length() = "+_reference_sequence.length());
+		/*System.out.println("N matched bases = "+getNumberOfMatches() +" -- "+(getNumberOfMatches()/(_query_sequence.length()+_reference_sequence.length()-getNumberOfMatches()+0.0)));
 		System.out.println("N matched bases = "+getNumberOfMatches() +" -- "+(getNumberOfMatches()/(_reference_sequence.length()+0.0)));
 		System.out.println("N mismatched bases = "+getNumberOfMismatches() +" -- "+(getNumberOfMismatches()/(_reference_sequence.length()+0.0)));
 		System.out.println("Alignment start on query: "+getAlignmentStart_query());
 		System.out.println("Alignment start on reference: "+getAlignmentStart_reference());
 		System.out.println("getAlignmentStart_query()-getAlignmentStart_reference() = "+(getAlignmentStart_query()-getAlignmentStart_reference()));
-		
-		getMatchFractionOfOverlap();
-		
-		System.out.println("read:\n"+reverse(_query_sequence));
-		for(int i=0;i<getAlignmentStart_query()-getAlignmentStart_reference();i++){ System.out.print(" "); }
-		System.out.println(reverse(_reference_sequence));
+		 */
+		//getMatchFractionOfOverlap();
+
+		return out;
 	}
-	
+
 	public static void main(String[] args) throws IOException{
 
 		//String read =           "GGGTGCCAATGAACTCCAGTCACCGATGT";  //29 long
@@ -404,36 +426,44 @@ public class Aligner_SmithWaterman {
 		String adapter3 = "TTTTGGGTGCCAAGGAACTCCAGTCACCGATGTAAAAAA";
 
 		String adapter4 = "TAGTGGGTTA"; //50 long
-		
+
+		String adapter5 = "BLAHBLAHGNCTGGTCCGATGG"; //50 long
+
 		Aligner_SmithWaterman sw1 = new Aligner_SmithWaterman(read, adapter1);
 		Aligner_SmithWaterman sw2 = new Aligner_SmithWaterman(read, adapter2);
 		Aligner_SmithWaterman sw3 = new Aligner_SmithWaterman(read, adapter3);
 		Aligner_SmithWaterman sw4 = new Aligner_SmithWaterman(read, adapter4);
-		
+		Aligner_SmithWaterman sw5 = new Aligner_SmithWaterman(read, adapter5);
+
 		boolean printBestAlignmentString = true;
 
 		sw1.findBestAlignments(printBestAlignmentString);
-		sw1.printAlignmentInfo();
+		System.out.println(sw1.getAlignmentInfo());
 		//sw1.printDPMatrix();
-		
+
 		System.out.println("\n\n");
 
 		sw2.findBestAlignments(printBestAlignmentString);
-		sw2.printAlignmentInfo();
+		System.out.println(sw2.getAlignmentInfo());
 		//sw2.printDPMatrix();
-		
+
 		System.out.println("\n\n");
 
 		sw3.findBestAlignments(printBestAlignmentString);
-		sw3.printAlignmentInfo();
+		System.out.println(sw3.getAlignmentInfo());
 		//sw3.printDPMatrix();
-		
+
 		System.out.println("\n\n");
 
 		sw4.findBestAlignments(printBestAlignmentString);
-		sw4.printAlignmentInfo();
+		System.out.println(sw4.getAlignmentInfo());
 		//sw3.printDPMatrix();
 
-		
+		System.out.println("\n\n");
+
+		sw5.findBestAlignments(printBestAlignmentString);
+		System.out.println(sw5.getAlignmentInfo());
+		//sw3.printDPMatrix();
+
 	}
 }
