@@ -14,7 +14,11 @@ public class GTF {
 	public int getType(){ return this.gtfType; }
 	
 	//private HashMap<Integer, >
+	
+	// transcripts by chromosome:
 	private HashMap<String, ArrayList<GenomicCoordinate>> list_GTFcoords = new HashMap<String, ArrayList<GenomicCoordinate>>();
+	
+	
 	public void setCoordinates(HashMap<String, ArrayList<GenomicCoordinate>> gtfCoords){ this.list_GTFcoords = gtfCoords; }
 	public HashMap<String, ArrayList<GenomicCoordinate>> getCoordinates(){ return this.list_GTFcoords; }
 

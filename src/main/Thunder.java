@@ -13,14 +13,15 @@ import transcriptome.ExtractSequencesFromGTF;
 import transcriptome.ModifyHeadersInTophatTranscriptome;
 import annotation.ReadAnnotation;
 import database.ListDBTables;
-import fastqTools.FindAdapter;
 import fastaTools.FastaHeaderGrep;
 import fastqTools.FilterBySequenceLength;
 import fastqTools.FilterFastxByHeaderList;
+import fastqTools.FindAdapter;
 import fastqTools.GetSequenceLengths;
 import fastqTools.MatchPairedEndSequences;
 import fastqTools.ProcessFastqWithRandomBarcode;
 import fastqTools.RemoveHomopolymers;
+import footprintAlignments.FootprintFrameCalculator;
 import genome.CreatePersonalGenome;
 import genome.ReadVCF;
 
@@ -114,7 +115,11 @@ public class Thunder {
 			ProcessFastqWithRandomBarcode.main(args);
 		}else if(main.equals("findadapter")){
 			FindAdapter.main(args);
+		}else if(main.equals("footprintframeanaysis")){
+			FootprintFrameCalculator.main(args);
 		}
+		
+		
 		
 		
 		else{
@@ -146,6 +151,7 @@ public class Thunder {
 			//System.out.println("         IsoformEM_Proteomics          | Infer most likely isoforms from MS/MS spectra mapping");
 			System.out.println("         CIGAR_2_PWM                   | Reads SAM alignments and converts the CIGAR strings to a position-weight matrix");
 			//System.out.println("         ProcessEndogenousAlignments   | Process endogenous smallRNA alignments for the exceRpt pipeline");
+			System.out.println("         FootprintFrameAnaysis         | Analyse ribosome footprint alignments in terms of fidelity to annotated coding frames");
 			System.out.println();
 		}
 

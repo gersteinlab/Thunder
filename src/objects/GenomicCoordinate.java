@@ -22,11 +22,11 @@ public class GenomicCoordinate{
 	}
 
 
-	//	public GenomicCoordinate(String chrom, int start, int end){
-	//		this.chrom = chrom;
-	//		this.start = start;
-	//		this.end = end;
-	//	}
+	public GenomicCoordinate(String chrom, int start, int end){
+		this.chrom = chrom;
+		this.start = start;
+		this.end = end;
+	}
 
 	public GenomicCoordinate(String id, String chrom, int start, int end){
 		this.id = id;

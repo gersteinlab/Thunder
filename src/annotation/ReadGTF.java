@@ -7,6 +7,8 @@ import java.util.ArrayList;
 
 import objects.GTF;
 import objects.GenomicCoordinate;
+import utils.IO_utils;
+
 
 public class ReadGTF {
 
@@ -44,6 +46,43 @@ public class ReadGTF {
 	}
 
 
+	public static TranscriptAnnotation readGTF(String gtfFile) throws Exception{
+		IO_utils.printLineErr("Reading GTF file...");
+
+		GTF thisGTF = new GTF();
+		thisGTF.setType(getSourceOfGTF(gtfFile));
+		
+		BufferedReader in = new BufferedReader(new FileReader(gtfFile));
+		TranscriptAnnotation annotation = new TranscriptAnnotation();
+		
+		String line = "";
+		int count = 0;
+		while((line=in.readLine()) != null){
+			if(!line.startsWith("##")){
+				//if(parseLine(line, keepAttributes, thisGTF, featureType, suppressNs, additionalAttributes))
+				String[] lineBits = parseLine(line);
+				//System.out.println(line);
+				
+				
+				GenomicCoordinate tmp = new GenomicCoordinate(lineBits[0], Integer.valueOf(lineBits[3]).intValue(), Integer.valueOf(lineBits[4]).intValue());
+				tmp = addAttributes(tmp, lineBits);
+				
+				if(lineBits[2].equals("exon")){
+					annotation.addExon(lineBits[0], lineBits[1], tmp, lineBits[6]);
+				}else if(lineBits[2].equals("CDS")){
+					annotation.addCDS(lineBits[0], lineBits[1], tmp, lineBits[6]);
+				}
+					
+				count ++;
+			}
+		}
+		in.close();
+		IO_utils.printLineErr("Done- read "+count+" GTF entries.");
+
+		return annotation;
+	}
+	
+	
 	/**
 	 * Read the records contained in this GTF file
 	 * @param gtfType
@@ -52,7 +91,7 @@ public class ReadGTF {
 	 * @throws Exception
 	 */
 	public static GTF readGTF(String gtfFile, boolean keepAttributes, ArrayList<String> featureType, boolean collapseByTranscriptID, boolean suppressNs, ArrayList<String> additionalAttributes) throws Exception{
-		System.out.print("Reading GTF file...");
+		IO_utils.printLineErr("Reading GTF file...");
 
 		GTF thisGTF = new GTF();
 		thisGTF.setType(getSourceOfGTF(gtfFile));
@@ -68,12 +107,12 @@ public class ReadGTF {
 			}
 		}
 		in.close();
-		System.out.println("Done- read "+count+" GTF entries.");
+		IO_utils.printLineErr("Done- read "+count+" GTF entries.");
 
 		if(collapseByTranscriptID){
-			System.out.print("Sorting and collapsing GTF entries by transcriptID...");
+			IO_utils.printLineErr("Sorting and collapsing GTF entries by transcriptID...");
 			GTF tmp = GTF.collapseEntriesByTranscriptID(thisGTF);
-			System.out.println("Done");
+			IO_utils.printLineErr("Done");
 			return tmp;
 		}
 		
