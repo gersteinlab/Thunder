@@ -161,7 +161,7 @@ public class Transcript {
 				while(it.hasNext()){
 					GenomicCoordinate tmp = it.next();
 					if(tmp.getStop() < cdsStart){ // CDS starts after this exon, include the whole thing
-						distance += tmp.getStop()-tmp.getStart();
+						distance += tmp.getStop()-tmp.getStart()+1;
 					}else if(tmp.getStart() < cdsStart){ // CDS starts inside this exon, include only the upstream part
 						distance += cdsStart-tmp.getStart();
 					}
@@ -170,7 +170,7 @@ public class Transcript {
 				while(it.hasNext()){
 					GenomicCoordinate tmp = it.next();
 					if(tmp.getStart() > cdsStart){ // CDS starts after this exon, include the whole thing
-						distance += tmp.getStop()-tmp.getStart();
+						distance += tmp.getStop()-tmp.getStart()+1;
 					}else if(tmp.getStop() > cdsStart){ // CDS starts inside this exon, include only the upstream part
 						distance += tmp.getStop()-cdsStart;
 					}

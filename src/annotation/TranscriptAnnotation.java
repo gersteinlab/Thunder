@@ -30,7 +30,8 @@ public class TranscriptAnnotation {
 		}
 		if(!_gene2transcript.containsKey(geneID))
 			_gene2transcript.put(geneID, new ArrayList<String>());
-		_gene2transcript.get(geneID).add(transcriptID);
+		if(!_gene2transcript.get(geneID).contains(transcriptID))
+			_gene2transcript.get(geneID).add(transcriptID);
 	}
 	
 	

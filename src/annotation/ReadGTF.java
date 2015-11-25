@@ -77,7 +77,7 @@ public class ReadGTF {
 			}
 		}
 		in.close();
-		IO_utils.printLineErr("Done- read "+count+" GTF entries.");
+		IO_utils.printLineErr("Done - Read "+count+" GTF entries corresponding to "+annotation.getMap_gene2transcript().size()+" genes and "+annotation.getTranscripts().size()+" transcripts");
 
 		return annotation;
 	}

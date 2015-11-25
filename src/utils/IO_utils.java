@@ -28,6 +28,8 @@ public class IO_utils {
 	    }
 	    bar.append("]   " + percent + "%     ");
 	    printErr(bar.toString()+"\r");
+	    if(percent == 100)
+	    	printLineErr("");
 	}
 	
 }
