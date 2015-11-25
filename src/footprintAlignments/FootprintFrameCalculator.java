@@ -143,7 +143,7 @@ public class FootprintFrameCalculator {
 	 * Reads transcriptome alignments in the given file
 	 * @param alignmentFile
 	 */
-	private void readAlignments(File alignmentFile){
+	private void readAlignments(File alignmentFile, int maxReads){
 		int count_allReads = 0;
 		int count_uniqueReads = 0;
 		int count_allAlignments = 0;
@@ -161,62 +161,67 @@ public class FootprintFrameCalculator {
 
 		IO_utils.printLineErr("Reading alignments...");
 		for (final SAMRecord thisRead : inputBam) {
-			count_allAlignments ++;
-
-			//if(count < 100){
-
-			// we're only looking at reads that match 29 base pairs
-			//if (thisRead.getCigar().getReferenceLength() != 29) {
-			//	continue;
-			//}
 
 			String transcriptID = thisRead.getReferenceName();
 			thisReadID = thisRead.getReadName();
-			thisGeneID = _annotation.getGeneForTranscript(transcriptID);
 
-			// for the very first read:
-			if(count_allAlignments == 1){
-				count_allReads ++;
-				lastReadID = thisReadID;
-				lastGeneID = thisGeneID;
-			}
+			if(!transcriptID.equals("*")){
+				count_allAlignments ++;
 
-			// check if this is the same read:
-			if(thisReadID.equals(lastReadID)){
-				// if it is the same read and maps to the same gene, keep it
-				if(thisGeneID.equals(lastGeneID)){
-					// everything ok so far
-					tmpReads.add(thisRead);
+				thisGeneID = _annotation.getGeneForTranscript(transcriptID);
+
+				if(thisGeneID == null){
+					IO_utils.printLineErr("WARNING: no geneID in annotation corresponding to transcript \'"+transcriptID+"\' for read \'"+thisReadID+"\'");
 				}else{
-					// read maps to +1 gene, suppress it
-					allOK = false;
-				}
-			}else{
-				// this is a new read
-				count_allReads ++;
 
-				if(allOK){
-					count_uniqueReads ++;
-					// add this read and transcripts to the global list...
-					count_uniqueAlignments += tmpReads.size();
-					Iterator<SAMRecord> it = tmpReads.iterator();
-					while(it.hasNext()){
-						SAMRecord tmpRead = it.next();
-						String tmpTranscriptID = tmpRead.getReferenceName();
-						// add read to transcript 
-						if(!_transcript2readAlignments.containsKey(tmpTranscriptID)) {
-							_transcript2readAlignments.put(tmpTranscriptID, new ArrayList<SAMRecord>());
+					// for the very first read:
+					if(count_allAlignments == 1){
+						count_allReads ++;
+						lastReadID = thisReadID;
+						lastGeneID = thisGeneID;
+					}
+
+					// check if this is the same read:
+					if(thisReadID.equals(lastReadID)){
+						// if it is the same read and maps to the same gene, keep it
+						if(thisGeneID.equals(lastGeneID)){
+							// everything ok so far
+							tmpReads.add(thisRead);
+						}else{
+							// read maps to +1 gene, suppress it
+							allOK = false;
 						}
-						_transcript2readAlignments.get(tmpTranscriptID).add(tmpRead);
+					}else{
+						// this is a new read
+						count_allReads ++;
+
+						if(allOK){
+							count_uniqueReads ++;
+							// add this read and transcripts to the global list...
+							count_uniqueAlignments += tmpReads.size();
+							Iterator<SAMRecord> it = tmpReads.iterator();
+							while(it.hasNext()){
+								SAMRecord tmpRead = it.next();
+								String tmpTranscriptID = tmpRead.getReferenceName();
+								// add read to transcript 
+								if(!_transcript2readAlignments.containsKey(tmpTranscriptID)) {
+									_transcript2readAlignments.put(tmpTranscriptID, new ArrayList<SAMRecord>());
+								}
+								_transcript2readAlignments.get(tmpTranscriptID).add(tmpRead);
+							}
+						}
+						tmpReads = new ArrayList<SAMRecord>();
+						tmpReads.add(thisRead);
+						allOK = true;
+						lastReadID = thisReadID;
+						lastGeneID = thisGeneID;
 					}
 				}
-				tmpReads = new ArrayList<SAMRecord>();
-				tmpReads.add(thisRead);
-				allOK = true;
-				lastReadID = thisReadID;
-				lastGeneID = thisGeneID;
 			}
-
+			if(count_allReads >= maxReads){
+				IO_utils.printLineErr("Using the first "+maxReads+" reads.");
+				break;
+			}
 
 		}
 		if (inputBam != null) inputBam.close();
@@ -305,23 +310,27 @@ public class FootprintFrameCalculator {
 			int totalReads = 0;
 			int bestReads = 0;
 			double bestOffset = 0.0;
-			Iterator<Double> offsets = _readLengths2offsets.get(i).keySet().iterator();
-			while(offsets.hasNext()){
-				Double thisOffset = offsets.next();
-				int nReads = _readLengths2offsets.get(i).get(thisOffset);
-				out.write(i+"\t"+thisOffset+"\t"+nReads+"\n");
 
-				totalReads += nReads;
-				if(nReads > bestReads){
-					bestReads = nReads;
-					bestOffset = thisOffset;
+			if(_readLengths2offsets.containsKey(i)){
+				Iterator<Double> offsets = _readLengths2offsets.get(i).keySet().iterator();
+				while(offsets.hasNext()){
+					Double thisOffset = offsets.next();
+					int nReads = _readLengths2offsets.get(i).get(thisOffset);
+					out.write(i+"\t"+thisOffset+"\t"+nReads+"\n");
+
+					totalReads += nReads;
+					if(nReads > bestReads){
+						bestReads = nReads;
+						bestOffset = thisOffset;
+					}
 				}
-			}
 
-			double fractionReads = (bestReads+0.0)/(totalReads+0.0);
-			//if(thisLength >= 26  &&  thisLength <= 33  &&  fractionReads > 0.5){
-			if(fractionReads > 0.5){
-				_readLengthWeights_empirical.put(i, new Double[]{bestOffset, fractionReads});
+				double fractionReads = (bestReads+0.0)/(totalReads+0.0);
+				//if(thisLength >= 26  &&  thisLength <= 33  &&  fractionReads > 0.5){
+				//if(fractionReads > 0.5){
+				if(i >= 20  &&  i <= 40  &&  fractionReads > 0.5){
+					_readLengthWeights_empirical.put(i, new Double[]{bestOffset, fractionReads});
+				}
 			}
 		}
 		out.flush();
@@ -779,6 +788,7 @@ public class FootprintFrameCalculator {
 		options.addOption(OptionBuilder.withArgName("footprint alignments").hasArg().withDescription("SAM/BAM file containing alignments against the transcriptome").create("f"));
 		options.addOption(OptionBuilder.withLongOpt("outputPrefix").withArgName("outputPath").hasArg().withDescription("[optional] Output prefix for results [default: same as input file]").create("o"));
 		options.addOption(OptionBuilder.withArgName("minFootprints").hasArg().withDescription("[optional] Transcript must have more than this minimum number of footprints to be included [default: 1]").create("N"));
+		options.addOption(OptionBuilder.withArgName("maxReads").hasArg().withDescription("[optional] Only read the first R reads from the input bam [default: 10000000]").create("R"));
 		return options;
 	}
 
@@ -814,16 +824,20 @@ public class FootprintFrameCalculator {
 			// start and read the annotation information
 			FootprintFrameCalculator engine = new FootprintFrameCalculator(cmdArgs.getOptionValue(Thunder.OPT_PATH_ANNOTATION), minFP);
 
+			// check override for min # of footprints
+			int maxReads = 10000000;
+			if(cmdArgs.hasOption("R"))
+				maxReads = Integer.valueOf(cmdArgs.getOptionValue("R"));
 			// Read the footprint alignments
-			engine.readAlignments(new File(cmdArgs.getOptionValue("f")));
+			engine.readAlignments(new File(cmdArgs.getOptionValue("f")), maxReads);
 
 			// Compare footprint midpoints to annotated codon positions
 			engine.computeReadMidOffset2CDS(outputPrefix+"_FramesPerTranscript_guessed.txt", _USE_OFFSET_GUESSED, false);
 			engine.writeReadLengths2offsets(outputPrefix+"_ReadLength_vs_codonOffset.txt");
-			engine.writeTranscriptFrameGuesses(outputPrefix+"_TranscriptFrames_guessed.txt");
+			//engine.writeTranscriptFrameGuesses(outputPrefix+"_TranscriptFrames_guessed.txt");
 
 			engine.computeReadMidOffset2CDS(outputPrefix+"_FramesPerTranscript_learned.txt", _USE_OFFSET_EMPIRICAL, false);
-			engine.writeTranscriptFrameGuesses(outputPrefix+"_TranscriptFrames_learned.txt");
+			//engine.writeTranscriptFrameGuesses(outputPrefix+"_TranscriptFrames_learned.txt");
 
 
 			// Calculate frame-consistency of reads for each transcript (to be used in the EM) 
