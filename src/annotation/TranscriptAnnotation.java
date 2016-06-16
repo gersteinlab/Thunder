@@ -46,7 +46,10 @@ public class TranscriptAnnotation {
 	 * @param transcriptID
 	 */
 	public void addExon(String chr, String source, GenomicCoordinate coords, String strand){//, String geneID, String transcriptID, String transcriptBiotype){
+		// make sure this transcript exists!
 		addTranscript(chr, source, strand, coords.getAttribute("gene_id"), coords.getAttribute("transcript_id"), coords.getAttribute("transcript_type"));
+		
+		// add the exon
 		_transcripts.get(coords.getAttribute("transcript_id")).addExon(coords);
 	}
 	

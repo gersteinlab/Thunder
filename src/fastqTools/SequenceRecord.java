@@ -3,7 +3,7 @@ package fastqTools;
 public class SequenceRecord {
 	private String id;
 	private StringBuffer seq = new StringBuffer();
-	private StringBuffer qual= new StringBuffer();
+	private StringBuffer qual = new StringBuffer();
 	
 	public SequenceRecord(String sequenceID){
 		this.id=sequenceID;	
@@ -19,6 +19,7 @@ public class SequenceRecord {
 	public String getSequenceID(){ return this.id; }
 	public void setSequenceID(String newID){ this.id = newID; }
 	
+	public void setQuality(String qual){ this.qual = new StringBuffer(qual); }
 	
 	public String toString(){
 		if(this.qual.length() == 0)

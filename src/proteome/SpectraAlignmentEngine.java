@@ -19,15 +19,24 @@ import utils.IO_utils;
 public class SpectraAlignmentEngine {
 
 	//private HashMap<String, Spectra> spectra = new HashMap<String, Spectra>();
-	private HashMap<String, ArrayList<Alignment>> alignments = new HashMap<String, ArrayList<Alignment>>();
+	private HashMap<String, ArrayList<Alignment>> _alignments = new HashMap<String, ArrayList<Alignment>>();
+	
 
-	public HashMap<String, ArrayList<Alignment>> getAlignments(){ return alignments; }
+	public HashMap<String, ArrayList<Alignment>> getAlignments(){ return _alignments; }
+	
+	public void mergeAlignments(HashMap<String, ArrayList<Alignment>> newAlignments){
+		_alignments.putAll(newAlignments);
+	}
 
+	
 	/**
 	 * 
 	 */
 	public SpectraAlignmentEngine(){}
-
+	public SpectraAlignmentEngine(String spectraIDprefix){
+		_spectraIDprefix = spectraIDprefix;
+	}
+	private String _spectraIDprefix = "";
 
 	private int alignmentCount = 0;
 	public int getNumberOfAlignments(){ return alignmentCount; }
@@ -43,9 +52,9 @@ public class SpectraAlignmentEngine {
 		//if(! spectra.containsKey(spec.getAttribute(Spectra.ATTRIBUTE_ID)))
 		//	spectra.put(spec.getAttribute(Spectra.ATTRIBUTE_ID), spec);
 
-		if(! alignments.containsKey(spec.getAttribute(Spectra.ATTRIBUTE_ID)))
-			alignments.put(spec.getAttribute(Spectra.ATTRIBUTE_ID), new ArrayList<Alignment>());
-		alignments.get(spec.getAttribute(Spectra.ATTRIBUTE_ID)).add(new Alignment(spec, pep, prot));
+		if(! _alignments.containsKey(_spectraIDprefix+spec.getAttribute(Spectra.ATTRIBUTE_ID)))
+			_alignments.put(_spectraIDprefix+spec.getAttribute(Spectra.ATTRIBUTE_ID), new ArrayList<Alignment>());
+		_alignments.get(_spectraIDprefix+spec.getAttribute(Spectra.ATTRIBUTE_ID)).add(new Alignment(spec, pep, prot));
 		alignmentCount++;
 
 	}
@@ -86,7 +95,7 @@ public class SpectraAlignmentEngine {
 
 		// TODO: really only just FDR filtering at the moment- maybe include MS1 intensities?
 		filterByReverseHits(fdrMax);
-		IO_utils.printLineErr("  N valid spectra:\t"+alignments.size());
+		IO_utils.printLineErr("  N valid spectra:\t"+_alignments.size());
 
 		if(removeCRAPome)
 			removeCRAPomeEntries("sp|", true);
@@ -101,14 +110,14 @@ public class SpectraAlignmentEngine {
 	public void removeCRAPomeEntries(String searchString, boolean verbose){
 		Alignment currentAlignment;
 		String currentSpectra;
-		Iterator<String> allSpectra = alignments.keySet().iterator();
+		Iterator<String> allSpectra = _alignments.keySet().iterator();
 		Iterator<Alignment> currentSpectraAlignments;
 		ArrayList<String> invalidSpectra = new ArrayList<String>();
 		ArrayList<String> crapomeIDs = new ArrayList<String>();
 		//String[] isoformFrameGene;
 		while(allSpectra.hasNext()){
 			currentSpectra = allSpectra.next();
-			currentSpectraAlignments = alignments.get(currentSpectra).iterator();
+			currentSpectraAlignments = _alignments.get(currentSpectra).iterator();
 			while(currentSpectraAlignments.hasNext()){
 				currentAlignment = currentSpectraAlignments.next();
 				if(currentAlignment.getProtein().getIsoformID().contains(searchString)){
@@ -123,15 +132,16 @@ public class SpectraAlignmentEngine {
 		// remove invalid spectra
 		Iterator<String> invalidIterator = invalidSpectra.iterator();
 		while(invalidIterator.hasNext())
-			alignments.remove(invalidIterator.next());
+			_alignments.remove(invalidIterator.next());
 
 
 		if(verbose){
 			Iterator<String> it = crapomeIDs.iterator();
-			System.err.print(IO_utils.getTime()+" Removed alignments to these CRAPome sequences: ");
+			IO_utils.printLineErr("Removed alignments to these CRAPome sequences: ");
+			IO_utils.printErr("  ");
 			while(it.hasNext())
 				System.err.print(it.next()+" ");
-			System.err.println();
+			System.err.println("");
 		}
 	}
 
@@ -147,12 +157,12 @@ public class SpectraAlignmentEngine {
 		out.write("PeptideSeq\tSpectraID\tIsoformID\tGeneID\tFrame\tStart\tStop\tExpectation_peptide\tExpectation_isoform\tMH\tCharge\tDelta\tHyperscore\tNextscore\ty_score\ty_ions\tb_score\tb_ions\tmissedCleavages\tPTMs\n");
 
 		Alignment currentAlignment;
-		Iterator<String> allSpectra = alignments.keySet().iterator();
+		Iterator<String> allSpectra = _alignments.keySet().iterator();
 		Iterator<Alignment> currentSpectraAlignments;
 
 		String[] isoformFrameGene;
 		while(allSpectra.hasNext()){
-			currentSpectraAlignments = alignments.get(allSpectra.next()).iterator();
+			currentSpectraAlignments = _alignments.get(allSpectra.next()).iterator();
 			while(currentSpectraAlignments.hasNext()){
 				currentAlignment = currentSpectraAlignments.next();
 
@@ -203,11 +213,11 @@ public class SpectraAlignmentEngine {
 		//
 		// Loop through all spectra and assign expectation values to either a legit DB hit, or to the reverse decoy
 		//
-		Iterator<String> spectraIterator = alignments.keySet().iterator();
+		Iterator<String> spectraIterator = _alignments.keySet().iterator();
 		while(spectraIterator.hasNext()){
 			spectraID = spectraIterator.next();
 
-			tmp_alignments = alignments.get(spectraID);
+			tmp_alignments = _alignments.get(spectraID);
 			Iterator<Alignment> alignmentIterator = tmp_alignments.iterator();
 
 			int countReverseHits = 0;
@@ -236,10 +246,10 @@ public class SpectraAlignmentEngine {
 		// Loop through all spectra and remove those that are not valid hits
 		//
 		ArrayList<String> invalidSpectraIDs = new ArrayList<String>();
-		spectraIterator = alignments.keySet().iterator();
+		spectraIterator = _alignments.keySet().iterator();
 		while(spectraIterator.hasNext()){
 			spectraID = spectraIterator.next();
-			tmp_alignments = alignments.get(spectraID);
+			tmp_alignments = _alignments.get(spectraID);
 			Iterator<Alignment> alignmentIterator = tmp_alignments.iterator();
 			ArrayList<Alignment> invalidAlignments = new ArrayList<Alignment>();
 			while(alignmentIterator.hasNext()){
@@ -257,10 +267,10 @@ public class SpectraAlignmentEngine {
 			// remove invalid alignments
 			Iterator<Alignment> invalidIterator = invalidAlignments.iterator();
 			while(invalidIterator.hasNext())
-				alignments.get(spectraID).remove(invalidIterator.next());
+				_alignments.get(spectraID).remove(invalidIterator.next());
 
 			// if there are no valid alignments for this spectra, flag it for removal
-			if(alignments.get(spectraID).size() == 0){
+			if(_alignments.get(spectraID).size() == 0){
 				invalidSpectraIDs.add(spectraID);
 			}
 		}
@@ -272,7 +282,7 @@ public class SpectraAlignmentEngine {
 		//
 		Iterator<String> removalIterator = invalidSpectraIDs.iterator();
 		while(removalIterator.hasNext()){
-			alignments.remove(removalIterator.next());
+			_alignments.remove(removalIterator.next());
 		}
 	}
 
@@ -324,14 +334,14 @@ public class SpectraAlignmentEngine {
 			}
 		}
 		
-		//System.err.println("maxExpect = "+maxExpect);
+		IO_utils.printLineErr("  Max expectation value for this FDR = "+maxExpect);
 
 		return maxExpect;
 	}
 
 
 
-	public int countSpectra(){ return this.alignments.size(); }
+	public int countSpectra(){ return this._alignments.size(); }
 	//public int countPeptides(){ return this.peptides.size(); }
 	//public int countProteins(){ return this.proteins.size(); }
 

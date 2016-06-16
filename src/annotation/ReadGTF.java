@@ -72,7 +72,7 @@ public class ReadGTF {
 				}else if(lineBits[2].equals("CDS")){
 					annotation.addCDS(lineBits[0], lineBits[1], tmp, lineBits[6]);
 				}
-					
+				
 				count ++;
 			}
 		}

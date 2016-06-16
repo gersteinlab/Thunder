@@ -116,9 +116,10 @@ public class FindAdapter {
 
 				// get alignment score
 				//double thisScore = sw.getAlignmentScore()-((sw.getAlignmentStart_reference()-1)*2.0); // subtract ref alignment start to penalise 5' bases of adapter not matching
-				double thisScore = (sw.getNumberOfMatches()+0.0)*Math.pow(sw.getMatchFractionOfOverlap(), 2);
+				/*double thisScore = (sw.getNumberOfMatches()+0.0)*Math.pow(sw.getMatchFractionOfOverlap(), 2);
 				if(thisScore < 0  ||  sw.getAlignmentStart_query() < sw.getAlignmentStart_reference())
-					thisScore = 0.0;
+					thisScore = 0.0;*/
+				double thisScore = sw.getWeightedScore();
 
 				// add this score to the global running total
 				_runningTotalOfScore += thisScore;
@@ -151,7 +152,8 @@ public class FindAdapter {
 				winningAdapter = getWinningAdapter(ratioOfMostLikelyAdapterToSecondBest);
 				if(winningAdapter != null  &&  (_adapterCumulativeScores.get(winningAdapter)/_nReadsProcessed) >= minAvgAdapterMatches){
 					// we can stop!
-					IO_utils.printLineErr("FOUND! Most likely adapter (after "+_nReadsProcessed+" reads) is "+winningAdapter+" with an average alignment score of "+(_adapterCumulativeScores.get(winningAdapter)/_nReadsProcessed)+" ("+getWinningAdapterScoreOverNextBest()+"x higher than "+getSecondBestAdapter()+", the next best adapter)");
+					IO_utils.printLineErr("FOUND! Most likely adapter (after "+_nReadsProcessed+" reads): "+winningAdapter+": "+_adapterSequences.get(winningAdapter));
+					IO_utils.printLineErr("       with an average alignment score of "+(Math.round(100.0*_adapterCumulativeScores.get(winningAdapter)/_nReadsProcessed)/100.0)+" ("+getWinningAdapterScoreOverNextBest()+"x higher than the next best adapter: "+getSecondBestAdapter()+": "+_adapterSequences.get(getSecondBestAdapter())+")");
 					break;
 				}
 			}
@@ -181,7 +183,9 @@ public class FindAdapter {
 			if(winningAdapter != null){
 				if((_adapterCumulativeScores.get(winningAdapter)/_nReadsProcessed) >= minAvgAdapterMatches){
 					// we can stop!
-					IO_utils.printLineErr("FOUND! Most likely adapter (after "+_nReadsProcessed+" reads, which is all that are available) is "+winningAdapter+" with an average alignment score of "+(_adapterCumulativeScores.get(winningAdapter)/_nReadsProcessed)+" ("+getWinningAdapterScoreOverNextBest()+"x higher than "+getSecondBestAdapter()+", the next best adapter)");
+					//IO_utils.printLineErr("FOUND! Most likely adapter (after "+_nReadsProcessed+" reads, which is all that are available) is "+winningAdapter+" with an average alignment score of "+(_adapterCumulativeScores.get(winningAdapter)/_nReadsProcessed)+" ("+getWinningAdapterScoreOverNextBest()+"x higher than "+getSecondBestAdapter()+", the next best adapter)");
+					IO_utils.printLineErr("FOUND! Most likely adapter (after "+_nReadsProcessed+" reads, which is all that are available): "+winningAdapter+": "+_adapterSequences.get(winningAdapter));
+					IO_utils.printLineErr("       with an average alignment score of "+(Math.round(100.0*_adapterCumulativeScores.get(winningAdapter)/_nReadsProcessed)/100.0)+" ("+getWinningAdapterScoreOverNextBest()+"x higher than the next best adapter: "+getSecondBestAdapter()+": "+_adapterSequences.get(getSecondBestAdapter())+")");
 				}else{
 					// if all reads have been processed but the alignments are all too bad, print the adapters
 					IO_utils.printLineErr("WARNING: Unable to determine the most likely adapter (after "+_nReadsProcessed+" reads and requiring an avarage adapter alignment rate at >= "+minAvgAdapterMatches+"nt)");
@@ -281,6 +285,9 @@ public class FindAdapter {
 		String secondBestAdapter = it.next();
 		if(_adapterCumulativeScores.get(bestAdapter) / _adapterCumulativeScores.get(secondBestAdapter) >= secondBestScoreOverbestScore){
 			winningAdapterID = bestAdapter;
+		}else{
+			// if this winning adapter is Illumina_1.5_smallRNA_3p and the next best is Illumina_1.0_smallRNA_3p, pick the former!
+			winningAdapterID = "Illumina_1.5_smallRNA_3p";
 		}
 
 		return winningAdapterID;
@@ -324,11 +331,13 @@ public class FindAdapter {
 
 	public static void main(String[] args) throws Exception {
 
-		//args = new String[]{"FindAdapter", "-n","10", "-r","1.3", "-s","7", "-a","/Users/robk/Downloads/adapters.fa", "/Users/robk/Downloads/tmp_reads_s.fq"};
-		//args = new String[]{"FindAdapter", "-n","10", "-r","1.3", "-s","7", "-a","/Users/robk/Downloads/adapters.fa", "--summary","/Users/robk/Downloads/tmp_reads_s.adapterLog", "/Users/robk/Downloads/tmp_reads_s.fq"};
+		//args = new String[]{"FindAdapter", "-n","10", "-v", "-r","1.3", "-s","7", "-a","/Users/robk/Downloads/adapters.fa", "/Users/robk/Downloads/tmp_reads_s.fq"};
+		//args = new String[]{"FindAdapter", "-v", "-n","10", "-r","1.3", "-s","7", "-a","/Users/robk/Downloads/adapters.fa", "--summary","/Users/robk/Downloads/tmp_reads_s.adapterLog", "/Users/robk/Downloads/tmp_reads_s.fq"};
 		//args = new String[]{"FindAdapter", "-n","100", "-r","1.3", "-s","7", "-v", "-a","/Users/robk/Downloads/adapters.fa", "--summary","/Users/robk/Downloads/miR-Pool-5pmoles-TruSeqRecJ-4N-2_S8_L001_R1_001.adapterLog", "/Users/robk/Downloads/miR-Pool-5pmoles-TruSeqRecJ-4N-2_S8_L001_R1_001.fastq"};
-
-
+		
+		//args = new String[]{"FindAdapter", "-n","1000", "-v", "-m","100000", "-s","7", "-a","/Users/robk/Downloads/adapters.fa", "/Users/robk/Downloads/MixA-a_S12_L001_R1_001.fastq", "-summary","/Users/robk/Downloads/ADAPTER_SUMMARY.txt"};
+		//args = new String[]{"FindAdapter", "-n","1000", "-v", "-m","100000", "-s","7", "-a","/Users/robk/Downloads/adapters.fa", "/Users/robk/Downloads/ERCCF-Zymo-50-c20-1_S4_L001_R1_001.fastq", "-summary","/Users/robk/Downloads/ADAPTER_SUMMARY.txt"};
+		
 		CommandLine cmdArgs = Thunder.parseArgs(args, getCmdLineOptions());
 		if(cmdArgs.getArgList().size() >= 2  &&  cmdArgs.hasOption("a")){
 

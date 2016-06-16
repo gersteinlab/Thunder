@@ -16,6 +16,10 @@ public class IO_utils {
 	public static void printLineErr(String message){ System.err.println(getTime()+" "+message); }
 	
 	public static void printProgressBar(int percent){
+		printProgressBar(percent+0.0);
+	}
+	public static void printProgressBar(double percent){
+		percent = Math.round(percent*100.0)/100.0;
 	    StringBuilder bar = new StringBuilder("[");
 	    for(int i = 0; i < 50; i++){
 	        if( i < (percent/2)){
@@ -28,8 +32,8 @@ public class IO_utils {
 	    }
 	    bar.append("]   " + percent + "%     ");
 	    printErr(bar.toString()+"\r");
-	    if(percent == 100)
-	    	printLineErr("");
+	    //if(percent == 100.0)
+	    //	System.err.println();
 	}
 	
 }

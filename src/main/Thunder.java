@@ -6,6 +6,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import proteome.ProcessPepDigest;
 import proteome.ReadXTandem;
 import proteome.ReadmzXML;
 import transcriptome.CIGAR_2_PWM;
@@ -13,7 +14,10 @@ import transcriptome.ExtractSequencesFromGTF;
 import transcriptome.ModifyHeadersInTophatTranscriptome;
 import annotation.ReadAnnotation;
 import database.ListDBTables;
+import fastaTools.Fasta2Fastq;
 import fastaTools.FastaHeaderGrep;
+import fastaTools.FastaRemoveDuplicates;
+import fastqTools.Fastq2Fasta;
 import fastqTools.FilterBySequenceLength;
 import fastqTools.FilterFastxByHeaderList;
 import fastqTools.FindAdapter;
@@ -22,12 +26,13 @@ import fastqTools.MatchPairedEndSequences;
 import fastqTools.ProcessFastqWithRandomBarcode;
 import fastqTools.RemoveHomopolymers;
 import footprintAlignments.FootprintFrameCalculator;
+import footprintAlignments.ReadCoverage;
 import genome.CreatePersonalGenome;
 import genome.ReadVCF;
 
 public class Thunder {
 
-	public static final String VERSION = "0.5.7";
+	public static final String VERSION = "0.6.1";
 	
 	public static final String OPT_PATH_DB_ANNOTATION = "A";
 	public static final String OPT_PATH_DB_SAMPLE = "S";
@@ -117,6 +122,16 @@ public class Thunder {
 			FindAdapter.main(args);
 		}else if(main.equals("footprintframeanaysis")){
 			FootprintFrameCalculator.main(args);
+		}else if(main.equals("peptidedigest")){
+			ProcessPepDigest.main(args);
+		}else if(main.equals("readcoverage")){
+			ReadCoverage.main(args);
+		}else if(main.equals("fastq2fasta")){
+			Fastq2Fasta.main(args);
+		}else if(main.equals("fasta2fastq")){
+			Fasta2Fastq.main(args);
+		}else if(main.equals("removefastaduplicates")){
+			FastaRemoveDuplicates.main(args);
 		}
 		
 		
@@ -132,6 +147,7 @@ public class Thunder {
 
 			System.out.println("Command: GetSequenceLengths            | Get the distribution of sequence lengths in a FASTA/Q file");
 			System.out.println("         FastaHeaderGrep               | Filter fasta sequences based on the sequence ID");
+			System.out.println("         RemoveFastaDuplicates         | Filter fasta sequences to remove duplicate sequence headers");
 			System.out.println("         FilterFastxByIDList           | Filter fasta/q sequences based on a list of sequence IDs");
 			System.out.println("         FilterSequencesByLength       | Filter fasta or fastq sequences based on some maximum sequence length");
 			System.out.println("         ProcessFastqWithRandomBarcode | Filter fasta or fastq sequences based on some maximum sequence length");
@@ -141,6 +157,8 @@ public class Thunder {
 			//System.out.println("         ModifyTophatHeaders        | re-formats fasta headers in the tophat-generated transcriptome for downstream compatibility with Thunder");
 			//System.out.println("         ListDBTables               | list the contents of a database");
 			System.out.println("         GTF2Fasta                     | Extract GTF coordinates from FASTA sequence(s)");
+			System.out.println("         Fasta2Fastq                   | Convert FASTA sequence(s) to FASTQ sequence(s)");
+			System.out.println("         Fastq2Fasta                   | Convert FASTQ sequence(s) to FASTA sequence(s)");
 			//System.out.println("         ReadAnnotation             | import annotation information in GTF to the database");
 			//System.out.println("         ReadVCF                    | import genotype data to the database");
 			//System.out.println("         CreatePersonalGenome       | create a personalised reference genome for a sample in the database");
@@ -150,8 +168,10 @@ public class Thunder {
 			//System.out.println("         IsoformEM_Footprints          | Infer most likely transcripts from ribosome footprint alignments");
 			//System.out.println("         IsoformEM_Proteomics          | Infer most likely isoforms from MS/MS spectra mapping");
 			System.out.println("         CIGAR_2_PWM                   | Reads SAM alignments and converts the CIGAR strings to a position-weight matrix");
+			System.out.println("         ReadCoverage                  | Reads SAM/BAM alignments to the TRANSCRIPTOME and calculates read coverage consistency");
 			//System.out.println("         ProcessEndogenousAlignments   | Process endogenous smallRNA alignments for the exceRpt pipeline");
 			System.out.println("         FootprintFrameAnaysis         | Analyse ribosome footprint alignments in terms of fidelity to annotated coding frames");
+			System.out.println("         PeptideDigest                 | Enzymatically digest a protein reference");
 			System.out.println();
 		}
 

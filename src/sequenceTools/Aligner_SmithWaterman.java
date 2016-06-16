@@ -56,8 +56,8 @@ public class Aligner_SmithWaterman {
 	//static final int MISMATCH_SCORE = -8;
 	//static final int INDEL_SCORE = -9;
 	static final int MATCH_SCORE = 1;
-	static final int MISMATCH_SCORE = -10;
-	static final int INDEL_SCORE = -10;
+	static final int MISMATCH_SCORE = -1;
+	static final int INDEL_SCORE = -100;
 
 	/**
 	 * Constants of directions.
@@ -296,6 +296,9 @@ public class Aligner_SmithWaterman {
 					alignmentStart_query = _query_length-i+1;
 					alignmentStart_reference = _reference_length-j+1;
 					printAlignments(i, j, "", "", print);
+					
+					i = _query_length;
+					j = _reference_length;
 				}
 			}
 		}
@@ -305,25 +308,27 @@ public class Aligner_SmithWaterman {
 	/**
 	 * print the dynamic programming matrix
 	 */
-	public void printDPMatrix()
-	{
+	public void printDPMatrix(){
 		System.out.print("   ");
 		for (int j=1; j<=_reference_length;j++)
 			System.out.print ("   "+_reference_sequence.charAt(j-1));
 		System.out.println();
-		for (int i=0; i<=_query_length; i++)
-		{
+
+		for (int i=0; i<=_query_length; i++){
 			if (i>0)
 				System.out.print(_query_sequence.charAt(i-1)+" ");
 			else 
 				System.out.print("  ");
-			for (int j=0; j<=_reference_length; j++)
-			{
+
+			for (int j=0; j<=_reference_length; j++){
 				System.out.print(score[i][j]/NORM_FACTOR+" ");
 			}
 			System.out.println();
 		}
 	}
+
+
+
 
 	/**
 	 *  Return a set of Matches idenfied in Dynamic programming matrix. 
@@ -374,12 +379,16 @@ public class Aligner_SmithWaterman {
 
 
 	public double getWeightedScore(){
-		return (getNumberOfMatches()+0.0)*Math.pow(getMatchFractionOfOverlap(), 2);
+		double nMismatches = (getNumberOfMatches()-getAlignmentScore())/2.0;
+		double newScore = (getNumberOfMatches()-nMismatches-(getAlignmentStart_reference()-1)+0.0)*Math.pow(getMatchFractionOfOverlap(), 2);
+		if(newScore < 0.0)
+			newScore = 0.0;
+		return newScore;
 	}
 
 	public String getAlignmentInfo(){
 		String out = "";
-		
+
 		//System.out.println("Alignment start on query: "+getAlignmentStart_query());
 		//System.out.println("Alignment start on reference: "+getAlignmentStart_reference());
 
@@ -393,7 +402,9 @@ public class Aligner_SmithWaterman {
 			out += reverse(_reference_sequence);
 		}
 
+		out += "\tmaxScore: "+getMaxScore();
 		out += "\tnMatch:" +getNumberOfMatches();
+		out += "\tnMismatch:" +getNumberOfMismatches();
 		out += "\tfracMatch:" +getMatchFractionOfOverlap();
 		out += "\tscore:" +getAlignmentScore();
 		out += "\tweightedScore:" +getWeightedScore();
@@ -417,53 +428,74 @@ public class Aligner_SmithWaterman {
 	public static void main(String[] args) throws IOException{
 
 		//String read =           "GGGTGCCAATGAACTCCAGTCACCGATGT";  //29 long
-		String read = "GNCTGGTCCGATGGTAGTGGGTTATCAGAACTTGGAATTCTCGGGTGCCA"; //50 long
-		String adapter1 =                             "TGGAATTCTCGGGTGCCAAGG";
+		//String read = "GNCTGGTCCGATGGTAGTGGGTTATCAGAACTTGGAATTCTCGGGTGCCA"; //50 long
+		//String adapter1 =                             "TGGAATTCTCGGGTGCCAAGG";
+
+		String read = "NNNNNNNNNNGCCCCGATCGATTCGTATGCCTTCTT";
+		//String read = "CCCCCCCACACAGGACACACATACAATACAACTCACACACAACATACACA";
+
+
+		String adapter_Illumina_1_0_smallRNA_3p = "TCGTATGCCGTCTTCTGCTTG";
+		String adapter_Illumina_1_5_smallRNA_3p = "ATCTCGTATGCCGTCTTCTGCTTGC";
+		String adapter_TruSeq_smallRNA_3p = "TGGAATTCTCGGGTGCCAAGG";
+		String adapter_NEB_smallRNA_3p = "AGATCGGAAGAGCACACGTCT";
+		String adapter_SOLiD_smallRNA_3p = "CGCCTTGGCCGTACAGCAG";
+		String adapter_TruSeq_adapter_p7 = "AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC";
 
 		//String str1 =            "GGGTGCCAAG GAACTCCAGTCACCGATGT";
-		String adapter2= "AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC";
+		//String adapter2= "AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC";
+		//String adapter3 = "TTTTGGGTGCCAAGGAACTCCAGTCACCGATGTAAAAAA";
+		//String adapter4 = "TAGTGGGTTA"; //50 long
+		//String adapter5 = "BLAHBLAHGNCTGGTCCGATGG"; //50 long
 
-		String adapter3 = "TTTTGGGTGCCAAGGAACTCCAGTCACCGATGTAAAAAA";
-
-		String adapter4 = "TAGTGGGTTA"; //50 long
-
-		String adapter5 = "BLAHBLAHGNCTGGTCCGATGG"; //50 long
-
-		Aligner_SmithWaterman sw1 = new Aligner_SmithWaterman(read, adapter1);
-		Aligner_SmithWaterman sw2 = new Aligner_SmithWaterman(read, adapter2);
-		Aligner_SmithWaterman sw3 = new Aligner_SmithWaterman(read, adapter3);
-		Aligner_SmithWaterman sw4 = new Aligner_SmithWaterman(read, adapter4);
-		Aligner_SmithWaterman sw5 = new Aligner_SmithWaterman(read, adapter5);
+		Aligner_SmithWaterman sw1 = new Aligner_SmithWaterman(read, adapter_Illumina_1_0_smallRNA_3p);
+		Aligner_SmithWaterman sw2 = new Aligner_SmithWaterman(read, adapter_Illumina_1_5_smallRNA_3p);
+		Aligner_SmithWaterman sw3 = new Aligner_SmithWaterman(read, adapter_TruSeq_smallRNA_3p);
+		Aligner_SmithWaterman sw4 = new Aligner_SmithWaterman(read, adapter_NEB_smallRNA_3p);
+		Aligner_SmithWaterman sw5 = new Aligner_SmithWaterman(read, adapter_SOLiD_smallRNA_3p);
+		Aligner_SmithWaterman sw6 = new Aligner_SmithWaterman(read, adapter_TruSeq_adapter_p7);
 
 		boolean printBestAlignmentString = true;
 
 		sw1.findBestAlignments(printBestAlignmentString);
+		System.out.println("Illumina_1_0_smallRNA_3p:");
 		System.out.println(sw1.getAlignmentInfo());
 		//sw1.printDPMatrix();
 
 		System.out.println("\n\n");
 
 		sw2.findBestAlignments(printBestAlignmentString);
+		System.out.println("adapter_Illumina_1_5_smallRNA_3p:");
 		System.out.println(sw2.getAlignmentInfo());
 		//sw2.printDPMatrix();
 
 		System.out.println("\n\n");
 
 		sw3.findBestAlignments(printBestAlignmentString);
+		System.out.println("adapter_TruSeq_smallRNA_3p:");
 		System.out.println(sw3.getAlignmentInfo());
 		//sw3.printDPMatrix();
 
 		System.out.println("\n\n");
 
 		sw4.findBestAlignments(printBestAlignmentString);
+		System.out.println("adapter_NEB_smallRNA_3p:");
 		System.out.println(sw4.getAlignmentInfo());
-		//sw3.printDPMatrix();
+		//sw4.printDPMatrix();
 
 		System.out.println("\n\n");
 
 		sw5.findBestAlignments(printBestAlignmentString);
+		System.out.println("adapter_SOLiD_smallRNA_3p:");
 		System.out.println(sw5.getAlignmentInfo());
-		//sw3.printDPMatrix();
+		//sw5.printDPMatrix();
+
+		System.out.println("\n\n");
+
+		sw6.findBestAlignments(printBestAlignmentString);
+		System.out.println("adapter_TruSeq_adapter_p7:");
+		System.out.println(sw6.getAlignmentInfo());
+		//sw6.printDPMatrix();
 
 	}
 }

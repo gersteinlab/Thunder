@@ -21,8 +21,8 @@ public class ProcessFastqWithRandomBarcode {
 	private boolean _look5p, _look3p, _calcBarcodeStats;
 	private String _barcodesLocatedAt;
 	private RandomBarcodeStats _stats;
-	
-	
+
+
 	/**
 	 * 
 	 * @param inputPath
@@ -38,19 +38,19 @@ public class ProcessFastqWithRandomBarcode {
 		_look5p = look5p;
 		_look3p = look3p;
 		_calcBarcodeStats = calcBarcodeStats;
-		
+
 		if(_look5p && _look3p)
 			_barcodesLocatedAt = "5' and 3'";
 		else if(_look5p)
 			_barcodesLocatedAt = "5'";
 		else if(_look3p)
 			_barcodesLocatedAt = "3'";
-		
+
 		_stats = new RandomBarcodeStats(nBarcodeBases, _look5p, _look3p);
 	}
 
-	
-	
+
+
 	/**
 	 * 
 	 * @throws IOException
@@ -65,11 +65,12 @@ public class ProcessFastqWithRandomBarcode {
 		}
 		System.err.println();
 		IO_utils.printLineErr("\tInput "+_nReads_in+" reads");
-		IO_utils.printLineErr("\tRemoved "+_nReads_suppressed+" barcode/adapter dimers");
+		IO_utils.printLineErr("\tRemoved "+_nReads_suppressed_dimer+" barcode/adapter dimers");
+		IO_utils.printLineErr("\tRemoved "+_nReads_suppressed_tooShort+" inserts that were shorter than "+_minInsertLength+" nt");
 		IO_utils.printLineErr("\tOutput "+_nReads_out+" reads"); 
 	}
 
-	
+
 	/**
 	 * 
 	 * @param bw
@@ -84,13 +85,14 @@ public class ProcessFastqWithRandomBarcode {
 				bw.write(tmpOut.toString()+"\n");
 		}
 		IO_utils.printLineErr("\n\tInput "+_nReads_in+" reads");
-		IO_utils.printLineErr("\tRemoved "+_nReads_suppressed+" barcode/adapter dimers");
+		IO_utils.printLineErr("\tRemoved "+_nReads_suppressed_dimer+" barcode/adapter dimers");
+		IO_utils.printLineErr("\tRemoved "+_nReads_suppressed_tooShort+" inserts that were shorter than "+_minInsertLength+" nt");
 		IO_utils.printLineErr("\tOutput "+_nReads_out+" reads");
 	}
 
-	
-	
-	private int _nReads_in=0, _nReads_out=0, _nReads_suppressed=0;
+
+
+	private int _nReads_in=0, _nReads_out=0, _nReads_suppressed_dimer=0, _nReads_suppressed_tooShort=0;
 	private double _tmpSecs = 0.0;
 	/**
 	 * 
@@ -101,7 +103,7 @@ public class ProcessFastqWithRandomBarcode {
 		String seq = in.getSequence();
 		String qual = in.getQuality();
 		_nReads_in ++;
-		
+
 		int n = 100000;
 		if(_nReads_in % n == 0){
 			System.err.print("\r"+IO_utils.getTime()+" Processed "+_nReads_in+" reads ("+Math.round(n/((System.currentTimeMillis()/1000.0)-_tmpSecs))+" reads/sec)     ");
@@ -131,22 +133,29 @@ public class ProcessFastqWithRandomBarcode {
 		}
 
 		if(trimmedReadSeq.length() > 0){
-			_nReads_out ++;
-			
-			if(_calcBarcodeStats)
-				_stats.add(trimmedReadSeq, barcode);
-			
-			SequenceRecord toReturn = new SequenceRecord(newFastqHeader.replaceAll(" ", "_"));
-			toReturn.addSequenceString(trimmedReadSeq);
-			toReturn.addQualityString(trimmedReadQual);
-			return toReturn;
+			if(trimmedReadSeq.length() >= _minInsertLength){
+				_nReads_out ++;
+
+				if(_calcBarcodeStats)
+					_stats.add(trimmedReadSeq, barcode);
+
+				SequenceRecord toReturn = new SequenceRecord(newFastqHeader.replaceAll(" ", "_"));
+				toReturn.addSequenceString(trimmedReadSeq);
+				toReturn.addQualityString(trimmedReadQual);
+				return toReturn;
+			}else{
+				_nReads_suppressed_tooShort ++;
+				return null;
+			}
 		}else{
-			_nReads_suppressed ++;
+			_nReads_suppressed_dimer ++;
 			return null;
 		}
 	}
 
-	
+	private int _minInsertLength = 16;
+	public void setMinInsertLength(int minLength){ _minInsertLength = minLength; } 
+
 	public void processBarcodeStatistics(String outputPath) throws IOException{
 		IO_utils.printLineErr("Processing barcode statistics");
 		_stats.processBarcodeStatistics(outputPath);
@@ -164,7 +173,7 @@ public class ProcessFastqWithRandomBarcode {
 		Options options = new Options();
 		options.addOption(OptionBuilder.withArgName("outputPath").hasArg().withDescription("output sequences shorter than the maximum length to this file [if not specified, sequences are printed to stdout]").create(Thunder.OPT_PATH_OUTPUT));
 		options.addOption(OptionBuilder.withArgName("randomBarcodeBaseCount").hasArg().withDescription("Number of degenerate bases in the random barcode [default: 4]").create("n"));
-		//options.addOption(OptionBuilder.withArgName("int").hasArg().withDescription("Maximum insert size (read length including 3' adapter)").create("max"));
+		options.addOption(OptionBuilder.withArgName("int").hasArg().withDescription("Minimum insert size (nt) following barcode removal [default: 16]").create("min"));
 		options.addOption(OptionBuilder.withArgName("barcode3p").withDescription("Look for barcode at 3' end of the read").create("3p"));
 		options.addOption(OptionBuilder.withArgName("barcode5p").withDescription("Look for barcode at 5' end of the read").create("5p"));
 		options.addOption(OptionBuilder.withArgName("path").hasArg().withDescription("Calculate statistics on the random barcodes and write to the given file").create("stats"));
@@ -186,7 +195,7 @@ public class ProcessFastqWithRandomBarcode {
 		//args = new String[]{"ProcessFastqWithRandomBarcode", "-n", "4", "--3p", "--5p", "--stats", "/Users/robk/Downloads/randomBarcodeTest.fq"};
 
 		//"/Users/robk/Downloads/miR-Pool-5pmoles-TruSeqRecJ-4N-2_S8_L001_R1_001_TEST_RandomBarcode_miR-Pool-5pmoles-TruSeqRecJ-4N-2_S8_L001_R1_001.clipped.fastq"
-		
+
 		/*args = new String[]{"ProcessFastqWithRandomBarcode", 
 				"-n", "4", 
 				"--3p", 
@@ -195,7 +204,7 @@ public class ProcessFastqWithRandomBarcode {
 				"-o","/Users/robk/Downloads/miR-Pool.clipped.norand.fastq", 
 				"/Users/robk/Downloads/miR-Pool-5pmoles-TruSeqRecJ-4N-2_S8_L001_R1_001_TEST_RandomBarcode_miR-Pool-5pmoles-TruSeqRecJ-4N-2_S8_L001_R1_001.clipped.fastq"};
 		 */
-		
+
 		CommandLine cmdArgs = Thunder.parseArgs(args, getCmdLineOptions());
 		//@SuppressWarnings("unchecked")
 		//Iterator<String> it = cmdArgs.getArgList().iterator();
@@ -210,6 +219,11 @@ public class ProcessFastqWithRandomBarcode {
 
 			ProcessFastqWithRandomBarcode engine = new ProcessFastqWithRandomBarcode((String) cmdArgs.getArgList().get(1), nBarcodeBases, cmdArgs.hasOption("5p"), cmdArgs.hasOption("3p"), cmdArgs.hasOption("stats"));
 			
+			// if the user has specified a different minimum insert size
+			if(cmdArgs.hasOption("min"))
+				engine.setMinInsertLength(Integer.valueOf(cmdArgs.getOptionValue("min")).intValue());
+			
+
 			if(cmdArgs.hasOption(Thunder.OPT_PATH_OUTPUT)){
 				BufferedWriter bw = new BufferedWriter(new FileWriter(cmdArgs.getOptionValue(Thunder.OPT_PATH_OUTPUT)));
 				engine.processFastqFile(bw);
@@ -222,7 +236,7 @@ public class ProcessFastqWithRandomBarcode {
 			if(cmdArgs.hasOption("stats")){
 				engine.processBarcodeStatistics(cmdArgs.getOptionValue("stats"));
 			}
-			
+
 			IO_utils.printLineErr("All done");
 		}else{
 			HelpFormatter formatter = new HelpFormatter();

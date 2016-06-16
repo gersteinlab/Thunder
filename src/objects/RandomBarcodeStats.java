@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
+import statsTools.Stats;
 import utils.IO_utils;
 
 
@@ -371,7 +372,7 @@ public class RandomBarcodeStats {
 				barcodeProb = this._globalBarcodeProbabilities_5p.get(thisBarcode);
 			else if(barcodePosition == BARCODE_POSITION_3P)
 				barcodeProb = this._globalBarcodeProbabilities_3p.get(thisBarcode);
-			entropy -= calculateKL(barcodeProb, thisBarcodeCount, barcodeBases, theseBarcodes.size());
+			entropy -= Stats.calculateKL(barcodeProb, thisBarcodeCount, barcodeBases, theseBarcodes.size());
 
 			// add the observed count for this barcode
 			//observedCounts[count] = thisBarcodeCount;
@@ -501,20 +502,7 @@ public class RandomBarcodeStats {
 
 
 
-	/**
-	 * Calculates the Kulbach-Liebler divergence for the given barcode counts
-	 * @param numberOfObservationsOfALLBarcodeSequences
-	 * @param numberOfObservationsOfThisBarcodeSequence
-	 * @param nBarcodeBases
-	 * @param nObservedBarcodes
-	 * @return
-	 */
-	public static double calculateKL(double barcodeProbability, int numberOfObservationsOfThisBarcodeSequence, int nBarcodeBases, int nObservedBarcodes){
-
-		double frequency = (double) numberOfObservationsOfThisBarcodeSequence * barcodeProbability;
-		return frequency * (Math.log(frequency*nObservedBarcodes) / Math.log(2));
-	}
-
+	
 
 	/**
 	 * Functions for computing the PWM of bases in the random barcode

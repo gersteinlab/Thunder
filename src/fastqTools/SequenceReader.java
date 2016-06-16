@@ -24,7 +24,7 @@ public class SequenceReader {
 	//
 	private String thisSequenceID = null;
 	private int nullCount = 0;
-	private BufferedReader buffer;
+	private BufferedReader _buffer;
 
 
 
@@ -35,16 +35,19 @@ public class SequenceReader {
 	 */
 	public SequenceReader(String inputFilePath) throws IOException{
 		if(inputFilePath.trim().equals("-"))
-			buffer = new BufferedReader(new InputStreamReader(System.in));
+			_buffer = new BufferedReader(new InputStreamReader(System.in));
 		else
-			buffer = new BufferedReader(new FileReader(inputFilePath));
+			_buffer = new BufferedReader(new FileReader(inputFilePath));
 	}
 
 	public SequenceReader(InputStream in) throws IOException{
-		buffer = new BufferedReader(new InputStreamReader(in));
+		_buffer = new BufferedReader(new InputStreamReader(in));
 	}
 
 
+	public void close() throws IOException{
+		_buffer.close();
+	}
 
 	private boolean isFastq = true;
 	private int lineCount = 0;
@@ -58,7 +61,7 @@ public class SequenceReader {
 		SequenceRecord toReturn = null;
 		// Reads the first header in the file
 		if(thisSequenceID == null){
-			line=buffer.readLine();
+			line=_buffer.readLine();
 			//if(line.startsWith("@") || line.startsWith(">")){
 			if(line.startsWith("@")){
 				isFastq = true;
@@ -77,7 +80,7 @@ public class SequenceReader {
 		boolean readingQual = false;
 
 		// Read lines until the next header
-		while((line=buffer.readLine()) != null){
+		while((line=_buffer.readLine()) != null){
 			lineCount ++;
 			//if(line.startsWith("@") || line.startsWith(">")){
 			if(isFastq){

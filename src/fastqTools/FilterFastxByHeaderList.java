@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import main.Thunder;
@@ -29,7 +30,8 @@ public class FilterFastxByHeaderList {
 		options.addOption(OptionBuilder.withArgName("IDListPath").hasArg().withDescription("file containing sequence IDs to use as a filter in the fasta headers (one ID per line)").create("IDs"));
 		options.addOption(OptionBuilder.withArgName("whitelist").withDescription("[default] ID list is a whitelist of fasta headers to INCLUDE").create("w"));
 		options.addOption(OptionBuilder.withArgName("blacklist").withDescription("[optional] ID list is a blacklist of fasta headers to EXCLUDE.  If both -w and -b are specified, -b takes preference").create("b"));
-		options.addOption(OptionBuilder.withArgName("allowIDPrefixes").withDescription("[optional] ID can be a prefix of the fullID in the fasta/q header").create("p"));
+		options.addOption(OptionBuilder.withArgName("allowIDPrefixes").withDescription("[optional] ID can be a PREFIX of the fullID in the fasta/q header").create("p"));
+		options.addOption(OptionBuilder.withArgName("allowIDSuffixes").withDescription("[optional] ID can be a SUFFIX of the fullID in the fasta/q header").create("s"));
 		return options;
 	}
 
@@ -40,15 +42,16 @@ public class FilterFastxByHeaderList {
 	 * @return
 	 * @throws IOException
 	 */
-	public static ArrayList<String> readList(File listPath) throws IOException{
-		IO_utils.printLineErr("Reading ID list");
-		ArrayList<String> idList = new ArrayList<String>();
+	public static HashSet<String> readList(File listPath) throws IOException{
+		IO_utils.printLineErr("Reading header list");
+		HashSet<String> idList = new HashSet<String>();
 		BufferedReader in = new BufferedReader(new FileReader(listPath));
 		String line = "";
 		while((line=in.readLine()) != null){
 			idList.add(line.trim());
 		}
 		in.close();
+		IO_utils.printLineErr("Read "+idList.size()+" headers");
 		return idList;
 	}
 
@@ -72,10 +75,11 @@ public class FilterFastxByHeaderList {
 				whitelist = false;
 
 			// read the ID list
-			ArrayList<String> idList = new ArrayList<String>();
+			HashSet<String> idList = new HashSet<String>();
 			if(cmdArgs.hasOption("IDs"))
 				idList = readList(new File(cmdArgs.getOptionValue("IDs")));
-
+			
+			
 			String thisArg = "";
 			it.next();
 			while(it.hasNext()){
@@ -93,6 +97,9 @@ public class FilterFastxByHeaderList {
 					boolean matchesList = false;
 					if(cmdArgs.hasOption("p")){
 						matchesList = idList.contains(tmp.getSequenceID().split(" ")[0]);
+					}else if(cmdArgs.hasOption("s")){
+						String[] tmpHeader = tmp.getSequenceID().split(" ");
+						matchesList = idList.contains(tmpHeader[tmpHeader.length-1]);
 					}else{
 						matchesList = idList.contains(tmp.getSequenceID());
 					}

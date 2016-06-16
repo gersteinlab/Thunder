@@ -8,4 +8,6 @@ all:
 	jar uf Thunder.jar -C ~/Programming/JAR-files/sqlite-jdbc-3.7.2/ org
 	jar uf Thunder.jar -C ~/Programming/JAR-files/sqlite-jdbc-3.7.2/ native
 	jar uf Thunder.jar -C ~/Programming/JAR-files/sam-1.96/ net
+	
+	scp Thunder.jar rrk24@grace.hpc.yale.edu:~/bin/
 	java -jar Thunder.jar
